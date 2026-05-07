@@ -1,7 +1,7 @@
 // app/page.tsx
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Brain,
@@ -31,6 +31,48 @@ export default function Home() {
   const [showShare, setShowShare] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
+  const [userTier, setUserTier] = useState<'free' | 'pro' | 'team'>('free');
+  const [analysesUsed, setAnalysesUsed] = useState(0);
+  const [isLoadingProfile, setIsLoadingProfile] = useState(true);
+
+  const FREE_LIMIT = 3;
+  const FREE_CHAR_LIMIT = 1000;
+
+  // Load user profile on mount
+  useEffect(() => {
+    const loadProfile = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const today = new Date().toISOString().split('T')[0];
+        const { data } = await supabase
+          .from('user_profiles')
+          .select('tier, analyses_today, last_analysis_date')
+          .eq('id', user.id)
+          .single();
+        if (data) {
+          setUserTier(data.tier || 'free');
+          if (data.last_analysis_date === today) {
+            setAnalysesUsed(data.analyses_today || 0);
+          } else {
+            // Reset for new day
+            setAnalysesUsed(0);
+            if (data.tier === 'free') {
+              await supabase
+                .from('user_profiles')
+                .update({ analyses_today: 0, last_analysis_date: today })
+                .eq('id', user.id);
+            }
+          }
+        }
+      }
+      setIsLoadingProfile(false);
+    };
+    loadProfile();
+  }, []);
+
+  const isFree = userTier === 'free';
+  const hasReachedLimit = isFree && analysesUsed >= FREE_LIMIT;
+  const isOverCharLimit = isFree && text.length > FREE_CHAR_LIMIT;
 
   const handleAnalyze = async () => {
     if (text.length < 10) {
@@ -38,39 +80,14 @@ export default function Home() {
       return;
     }
 
-    // Check free tier limits
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      const { data: profile } = await supabase
-        .from('user_profiles')
-        .select('tier, analyses_today, last_analysis_date')
-        .eq('id', user.id)
-        .single();
+    if (hasReachedLimit) {
+      toast.error('Free plan limit: 3 analyses per day. Upgrade to Pro for unlimited.');
+      return;
+    }
 
-      const isFree = !profile || profile.tier === 'free';
-      if (isFree) {
-        const today = new Date().toISOString().split('T')[0];
-        let currentCount = profile?.analyses_today || 0;
-
-        // Reset if new day
-        if (profile && profile.last_analysis_date !== today) {
-          currentCount = 0;
-          await supabase
-            .from('user_profiles')
-            .update({ analyses_today: 0, last_analysis_date: today })
-            .eq('id', user.id);
-        }
-
-        if (currentCount >= 3) {
-          toast.error('Free plan limit: 3 analyses per day. Upgrade to Pro for unlimited.');
-          return;
-        }
-
-        if (text.length > 1000) {
-          toast.error('Free plan limit: 1,000 characters. Upgrade to Pro for longer text.');
-          return;
-        }
-      }
+    if (isOverCharLimit) {
+      toast.error(`Free plan limit: ${FREE_CHAR_LIMIT} characters. Upgrade to Pro for longer text.`);
+      return;
     }
 
     setIsAnalyzing(true);
@@ -81,38 +98,23 @@ export default function Home() {
       setIsSaved(false);
       toast.success('Analysis complete');
 
-      // Increment counter for free users
-      if (user) {
-        const { data: profile } = await supabase
+      // Increment usage for free users
+      if (isFree) {
+        const newCount = analysesUsed + 1;
+        setAnalysesUsed(newCount);
+        const today = new Date().toISOString().split('T')[0];
+        await supabase
           .from('user_profiles')
-          .select('tier, analyses_today, last_analysis_date')
-          .eq('id', user.id)
-          .single();
-
-        if (!profile || profile.tier === 'free') {
-          const today = new Date().toISOString().split('T')[0];
-          const isNewDay = profile?.last_analysis_date !== today;
-          const newCount = isNewDay ? 1 : (profile?.analyses_today || 0) + 1;
-
-          await supabase
-            .from('user_profiles')
-            .upsert(
-              {
-                id: user.id,
-                email: user.email,
-                tier: 'free',
-                analyses_today: newCount,
-                last_analysis_date: today,
-              },
-              { onConflict: 'id' }
-            );
-        }
+          .upsert({
+            id: (await supabase.auth.getUser()).data.user?.id,
+            email: (await supabase.auth.getUser()).data.user?.email,
+            tier: 'free',
+            analyses_today: newCount,
+            last_analysis_date: today,
+          }, { onConflict: 'id' });
       }
     } catch (error) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : 'Analysis failed. Please try again.';
+      const message = error instanceof Error ? error.message : 'Analysis failed. Please try again.';
       toast.error(message);
       console.error(error);
     } finally {
@@ -136,25 +138,21 @@ export default function Home() {
       return;
     }
 
-    // Ensure user profile exists
-    const { error: profileError } = await supabase
+    // Ensure user profile exists, but DO NOT overwrite the tier
+    const { data: profile } = await supabase
       .from('user_profiles')
-      .upsert(
-        {
-          id: user.id,
-          email: user.email,
-          tier: 'free',
-          analyses_today: 0,
-          last_analysis_date: new Date().toISOString().split('T')[0],
-        },
-        { onConflict: 'id' }
-      );
+      .select('id')
+      .eq('id', user.id)
+      .single();
 
-    if (profileError) {
-      console.error('Profile error:', profileError);
-      toast.error(`Profile error: ${profileError.message}`);
-      setIsSaving(false);
-      return;
+    if (!profile) {
+      await supabase.from('user_profiles').insert({
+        id: user.id,
+        email: user.email,
+        tier: 'free',
+        analyses_today: 0,
+        last_analysis_date: new Date().toISOString().split('T')[0],
+      });
     }
 
     const { error } = await supabase.from('saved_analyses').insert({
@@ -229,19 +227,30 @@ export default function Home() {
         />
 
         <div className="flex justify-between items-center mt-6 pt-6 border-t border-stone-300/50">
-          <div className="text-sm text-stone-500">
-            {isAnalyzing ? 'Analyzing your text…' : `${text.length} characters`}
+          <div className="flex flex-col items-start gap-1">
+            <div className={`text-sm font-medium ${
+              isFree && text.length > FREE_CHAR_LIMIT ? 'text-red-500' : 'text-stone-500'
+            }`}>
+              {text.length} / {isFree ? FREE_CHAR_LIMIT : '∞'} characters
+            </div>
+            {isFree && !isLoadingProfile && (
+              <div className="text-xs text-stone-400">
+                {FREE_LIMIT - analysesUsed} / {FREE_LIMIT} analyses remaining today
+              </div>
+            )}
           </div>
 
           <motion.button
-            whileHover={isAnalyzing ? {} : { scale: 1.02 }}
-            whileTap={isAnalyzing ? {} : { scale: 0.98 }}
+            whileHover={isAnalyzing || hasReachedLimit || isOverCharLimit ? {} : { scale: 1.02 }}
+            whileTap={isAnalyzing || hasReachedLimit || isOverCharLimit ? {} : { scale: 0.98 }}
             onClick={handleAnalyze}
-            disabled={isAnalyzing}
+            disabled={isAnalyzing || hasReachedLimit || isOverCharLimit}
             className={`relative px-8 py-3.5 rounded-2xl font-medium flex items-center gap-2 transition-all duration-200 ${
               isAnalyzing
                 ? 'bg-teal-400 text-white shadow-lg shadow-teal-200/40 cursor-wait'
-                : 'bg-teal-500 text-white hover:bg-teal-600 shadow-lg shadow-teal-200/30'
+                : hasReachedLimit || isOverCharLimit
+                  ? 'bg-stone-300 text-stone-500 cursor-not-allowed'
+                  : 'bg-teal-500 text-white hover:bg-teal-600 shadow-lg shadow-teal-200/30'
             } disabled:opacity-100`}
           >
             {isAnalyzing && (
@@ -261,6 +270,19 @@ export default function Home() {
             )}
           </motion.button>
         </div>
+
+        {isFree && hasReachedLimit && (
+          <p className="mt-3 text-sm text-amber-600">
+            You&apos;ve used all free analyses today.{' '}
+            <a href="/pricing" className="underline font-medium">Upgrade to Pro</a> for unlimited analyses.
+          </p>
+        )}
+        {isFree && isOverCharLimit && (
+          <p className="mt-3 text-sm text-red-500">
+            Text exceeds the {FREE_CHAR_LIMIT}-character free limit.{' '}
+            <a href="/pricing" className="underline font-medium">Upgrade to Pro</a> for unlimited length.
+          </p>
+        )}
       </motion.div>
 
       {/* Results Section */}
@@ -489,8 +511,8 @@ export default function Home() {
   );
 }
 
-// ---------- Helper Components ----------
-
+// Helper components (ResultsCard, ToneIndicator, FeatureCard) remain unchanged
+// ... include the same helper functions as before ...
 function ResultsCard({
   icon,
   title,
@@ -556,8 +578,7 @@ function FeatureCard({
   );
 }
 
-// ---------- Utility Functions ----------
-
+// Utility functions
 function getPlaceholder(context: WritingContext): string {
   const placeholders: Record<WritingContext, string> = {
     email: "Dear team, I wanted to address the concerns raised in yesterday's meeting...",
