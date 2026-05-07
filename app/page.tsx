@@ -88,11 +88,11 @@ export default function Home() {
     );
 
   if (profileError) {
-    console.error('Profile error:', profileError);
-    toast.error('Could not create user profile');
-    setIsSaving(false);
-    return;
-  }
+  console.error('Profile error:', profileError);
+  toast.error(`Profile error: ${profileError.message}`);
+  setIsSaving(false);
+  return;
+}
 
   // Now save the analysis
   const { error } = await supabase.from('saved_analyses').insert({
