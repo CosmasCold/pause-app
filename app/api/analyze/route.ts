@@ -182,30 +182,24 @@ export async function POST(request: NextRequest) {
     }
 
     // Normalize tone values
-    const validTones = [
-      'neutral',
-      'concerned',
-      'frustrated',
-      'angry',
-      'appreciative',
-      'professional',
-      'mixed',
-      'sad',
-    ];
+    const validTones = ['neutral', 'concerned', 'frustrated', 'angry', 'appreciative', 'professional', 'mixed', 'sad'];
     for (const key of ['start', 'middle', 'end'] as const) {
       if (!validTones.includes(aiResult.emotionalTone[key])) {
         aiResult.emotionalTone[key] = 'frustrated';
       }
     }
-    const validShifts = [
-      'stable',
-      'positive-to-negative',
-      'negative-to-positive',
-      'minimal',
-    ];
-    if (!validShifts.includes(aiResult.emotionalTone.shift)) {
+
+    // Override shift: if all tones are the same, shift is stable
+    const { start, middle, end } = aiResult.emotionalTone;
+    if (start === middle && middle === end) {
       aiResult.emotionalTone.shift = 'stable';
+    } else {
+      const validShifts = ['stable', 'positive-to-negative', 'negative-to-positive', 'minimal'];
+      if (!validShifts.includes(aiResult.emotionalTone.shift)) {
+        aiResult.emotionalTone.shift = 'stable';
+      }
     }
+
     const validIntensities = ['mild', 'moderate', 'intense'];
     if (!validIntensities.includes(aiResult.emotionalTone.intensity)) {
       aiResult.emotionalTone.intensity = 'intense';

@@ -1,3 +1,4 @@
+// components/ShareCard.tsx
 'use client';
 
 import { useRef, useState } from 'react';
@@ -36,7 +37,7 @@ export default function ShareCard({
     ? 'Worth a second look' 
     : 'Saved by the pause';
 
-  const shareText = `I almost sent this ${context}, but Pause caught ${biasesDetected} cognitive ${biasesDetected === 1 ? 'bias' : 'biases'} and gave it a ${regretScore}% regret probability. ${scoreEmoji}\n\n\u201C${textPreview.substring(0, 100)}...\u201D\n\n${scoreMessage}.\n\nTry Pause: https://pauseapp.com`;
+  const shareText = `I almost sent this ${context}, but Pause caught ${biasesDetected} cognitive ${biasesDetected === 1 ? 'bias' : 'biases'} and gave it a ${regretScore}% regret probability. ${scoreEmoji}\n\n\u201C${textPreview.substring(0, 100)}...\u201D\n\n${scoreMessage}.`;
 
   const handleDownload = async () => {
     if (!cardRef.current) return;
@@ -62,8 +63,24 @@ export default function ShareCard({
     }
   };
 
-  const handleCopyLink = () => {
-    navigator.clipboard.writeText(shareText);
+  const copyToClipboard = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch {
+      // Fallback for older browsers
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textarea);
+      return true;
+    }
+  };
+
+  const handleCopyLink = async () => {
+    await copyToClipboard(shareText);
     toast.success('Copied to clipboard!');
   };
 
@@ -74,10 +91,11 @@ export default function ShareCard({
     );
   };
 
-  const handleLinkedInShare = () => {
-    navigator.clipboard.writeText(shareText);
-    window.open('https://linkedin.com/sharing/share-offsite/', '_blank');
-    toast.success('Text copied! Paste it on LinkedIn');
+  const handleLinkedInShare = async () => {
+    await copyToClipboard(shareText);
+    toast.success('Analysis copied! Paste with Ctrl+V on LinkedIn or anywhere you like.', {
+      duration: 5000,
+    });
   };
 
   if (!isOpen) return null;
@@ -97,8 +115,8 @@ export default function ShareCard({
         onClick={(e) => e.stopPropagation()}
         className="bg-white rounded-3xl max-w-lg w-full shadow-2xl overflow-hidden"
       >
-        <div className="flex justify-between items-center p-6 border-b">
-          <h2 className="text-xl font-playfair font-bold">Share Your Pause</h2>
+        <div className="flex justify-between items-center p-6 border-b border-stone-200">
+          <h2 className="text-xl font-playfair font-bold text-stone-800">Share Your Pause</h2>
           <button onClick={onClose} className="text-stone-400 hover:text-stone-600">
             <X className="w-5 h-5" />
           </button>
@@ -130,7 +148,6 @@ export default function ShareCard({
 
             <div className="flex justify-between items-center text-sm text-stone-600">
               <span>{biasesDetected} {biasesDetected === 1 ? 'bias' : 'biases'} detected</span>
-              <span className="font-bold text-teal-600">pauseapp.com</span>
             </div>
           </div>
 

@@ -13,11 +13,14 @@ import {
   Zap,
   Users,
   Share2,
+  Check,
+  Save,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { analyzeText } from '@/lib/analyzer';
 import { AnalysisResult, WritingContext } from '@/lib/types';
 import ShareCard from '@/components/ShareCard';
+import { supabase } from '@/lib/supabase';
 
 export default function Home() {
   const [text, setText] = useState('');
@@ -26,6 +29,8 @@ export default function Home() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const [showShare, setShowShare] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
 
   const handleAnalyze = async () => {
     if (text.length < 10) {
@@ -38,6 +43,7 @@ export default function Home() {
       const result = await analyzeText(text, context);
       setAnalysis(result);
       setShowResults(true);
+      setIsSaved(false);
       toast.success('Analysis complete');
     } catch (error) {
       const message =
@@ -54,6 +60,33 @@ export default function Home() {
   const handleRephraseApply = (rephrase: string) => {
     setText(rephrase);
     toast.success('Rephrasing applied!');
+  };
+
+  const handleSaveAnalysis = async () => {
+    if (!analysis || isSaved) return;
+    setIsSaving(true);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      toast.error('Sign in to save analyses');
+      setIsSaving(false);
+      return;
+    }
+    const { error } = await supabase.from('saved_analyses').insert({
+      user_id: user.id,
+      original_text: text,
+      context,
+      regret_score: analysis.regretScore,
+      biases: analysis.biases,
+      emotional_tone: analysis.emotionalTone,
+      assumptions: analysis.assumptions,
+    });
+    if (error) {
+      toast.error('Failed to save');
+    } else {
+      setIsSaved(true);
+      toast.success('Saved to history!');
+    }
+    setIsSaving(false);
   };
 
   return (
@@ -185,47 +218,60 @@ export default function Home() {
                 {getScoreMessage(analysis.regretScore)}
               </p>
 
-              <button
-                onClick={() => setShowShare(true)}
-                className="mt-4 flex items-center gap-2 text-teal-600 hover:text-teal-700 transition-colors font-medium"
-              >
-                <Share2 className="w-4 h-4" />
-                Share your Pause
-              </button>
+              <div className="flex gap-4 mt-4">
+                <button
+                  onClick={() => setShowShare(true)}
+                  className="flex items-center gap-2 text-teal-600 hover:text-teal-700 transition-colors font-medium"
+                >
+                  <Share2 className="w-4 h-4" />
+                  Share
+                </button>
+
+                <button
+                  onClick={handleSaveAnalysis}
+                  disabled={isSaving || isSaved}
+                  className={`flex items-center gap-2 text-sm font-medium transition-colors ${
+                    isSaved
+                      ? 'text-teal-500 cursor-default'
+                      : 'text-teal-600 hover:text-teal-700'
+                  }`}
+                >
+                  {isSaving ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 animate-spin" />
+                      Saving...
+                    </>
+                  ) : isSaved ? (
+                    <>
+                      <Check className="w-4 h-4" />
+                      Saved
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-4 h-4" />
+                      Save to History
+                    </>
+                  )}
+                </button>
+              </div>
             </motion.div>
 
             {/* Emotional Tone */}
-            <ResultsCard
-              icon={<Heart className="w-5 h-5" />}
-              title="Emotional Tone"
-            >
+            <ResultsCard icon={<Heart className="w-5 h-5" />} title="Emotional Tone">
               <div className="grid grid-cols-3 gap-4">
-                <ToneIndicator
-                  label="Opening"
-                  tone={analysis.emotionalTone.start}
-                />
-                <ToneIndicator
-                  label="Middle"
-                  tone={analysis.emotionalTone.middle}
-                />
-                <ToneIndicator
-                  label="Closing"
-                  tone={analysis.emotionalTone.end}
-                />
+                <ToneIndicator label="Opening" tone={analysis.emotionalTone.start} />
+                <ToneIndicator label="Middle" tone={analysis.emotionalTone.middle} />
+                <ToneIndicator label="Closing" tone={analysis.emotionalTone.end} />
               </div>
               {analysis.emotionalTone.shift !== 'stable' && (
-                <div className="mt-4 p-4 bg-amber-50/80 rounded-2xl text-amber-800 font-medium">
-                  Tone shift detected:{' '}
-                  {analysis.emotionalTone.shift.replace(/-/g, ' → ')}
+                <div className="mt-4 p-4 bg-amber-50/80 rounded-2xl text-amber-800">
+                  Tone shift detected: {analysis.emotionalTone.shift.replace(/-/g, ' → ')}
                 </div>
               )}
             </ResultsCard>
 
             {/* Cognitive Biases */}
-            <ResultsCard
-              icon={<Brain className="w-5 h-5" />}
-              title="Cognitive Biases Detected"
-            >
+            <ResultsCard icon={<Brain className="w-5 h-5" />} title="Cognitive Biases Detected">
               {analysis.biases.length === 0 ? (
                 <p className="text-stone-600">
                   No significant cognitive biases detected. Great job!
@@ -235,9 +281,7 @@ export default function Home() {
                   {analysis.biases.map((bias, i) => (
                     <div key={i} className="p-4 bg-stone-100/80 rounded-2xl">
                       <div className="flex items-start justify-between mb-2">
-                        <h4 className="font-semibold text-stone-800">
-                          {bias.type}
-                        </h4>
+                        <h4 className="font-semibold text-stone-800">{bias.type}</h4>
                         <span className="text-sm text-stone-500">
                           {Math.round(bias.confidence * 100)}% confidence
                         </span>
@@ -245,9 +289,7 @@ export default function Home() {
                       <p className="text-sm text-stone-600 mb-2">
                         &ldquo;{bias.excerpt}&rdquo;
                       </p>
-                      <p className="text-xs text-stone-500">
-                        {bias.explanation}
-                      </p>
+                      <p className="text-xs text-stone-500">{bias.explanation}</p>
                     </div>
                   ))}
                 </div>
@@ -255,14 +297,9 @@ export default function Home() {
             </ResultsCard>
 
             {/* Assumptions */}
-            <ResultsCard
-              icon={<Eye className="w-5 h-5" />}
-              title="Assumptions About Others"
-            >
+            <ResultsCard icon={<Eye className="w-5 h-5" />} title="Assumptions About Others">
               {analysis.assumptions.length === 0 ? (
-                <p className="text-stone-600">
-                  No assumptions detected in your writing.
-                </p>
+                <p className="text-stone-600">No assumptions detected in your writing.</p>
               ) : (
                 <div className="space-y-3">
                   {analysis.assumptions.map((assumption, i) => (
@@ -271,7 +308,7 @@ export default function Home() {
                       className="flex items-center gap-3 p-3 bg-purple-50/80 rounded-xl"
                     >
                       <div className="w-2 h-2 rounded-full bg-purple-500" />
-                      <p className="text-sm text-purple-900 font-medium">
+                      <p className="text-sm text-purple-900">
                         &ldquo;{assumption.text}&rdquo;
                       </p>
                     </div>
@@ -282,10 +319,7 @@ export default function Home() {
 
             {/* Suggested Rephrases */}
             {analysis.suggestedRephrases.length > 0 && (
-              <ResultsCard
-                icon={<RefreshCw className="w-5 h-5" />}
-                title="Suggested Rephrasing"
-              >
+              <ResultsCard icon={<RefreshCw className="w-5 h-5" />} title="Suggested Rephrasing">
                 <div className="space-y-3">
                   {analysis.suggestedRephrases.map((rephrase, i) => (
                     <button
@@ -293,12 +327,8 @@ export default function Home() {
                       onClick={() => handleRephraseApply(rephrase)}
                       className="w-full text-left p-4 bg-teal-50/80 rounded-2xl hover:bg-teal-100/80 transition-colors group"
                     >
-                      <p className="text-teal-800 font-medium mb-1">
-                        Rewrite {i + 1}:
-                      </p>
-                      <p className="text-stone-700">
-                        &ldquo;{rephrase}&rdquo;
-                      </p>
+                      <p className="text-teal-800 font-medium mb-1">Rewrite {i + 1}:</p>
+                      <p className="text-stone-700">&ldquo;{rephrase}&rdquo;</p>
                       <p className="text-xs text-teal-600 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
                         Click to apply &rarr;
                       </p>
@@ -371,7 +401,8 @@ export default function Home() {
   );
 }
 
-// Helper components
+// ---------- Helper Components ----------
+
 function ResultsCard({
   icon,
   title,
@@ -389,9 +420,7 @@ function ResultsCard({
     >
       <div className="flex items-center gap-3 mb-6">
         <div className="text-teal-600">{icon}</div>
-        <h3 className="text-xl font-playfair font-bold text-stone-800">
-          {title}
-        </h3>
+        <h3 className="text-xl font-playfair font-bold text-stone-800">{title}</h3>
       </div>
       {children}
     </motion.div>
@@ -399,12 +428,24 @@ function ResultsCard({
 }
 
 function ToneIndicator({ label, tone }: { label: string; tone: string }) {
+  const capitalizeTone = (t: string) => {
+    const map: Record<string, string> = {
+      neutral: 'Neutral',
+      concerned: 'Concerned',
+      frustrated: 'Frustrated',
+      angry: 'Angry',
+      appreciative: 'Appreciative',
+      professional: 'Professional',
+      mixed: 'Mixed',
+      sad: 'Sad',
+    };
+    return map[t] || t.charAt(0).toUpperCase() + t.slice(1);
+  };
+
   return (
     <div className="text-center p-4 bg-stone-100/80 rounded-2xl">
-      <p className="text-xs text-stone-500 mb-2 uppercase tracking-wide">
-        {label}
-      </p>
-      <p className="font-semibold text-stone-700 capitalize">{tone}</p>
+      <p className="text-xs text-stone-500 mb-2 uppercase tracking-wide">{label}</p>
+      <p className="font-semibold text-stone-700">{capitalizeTone(tone)}</p>
     </div>
   );
 }
@@ -427,11 +468,11 @@ function FeatureCard({
   );
 }
 
-// Utility functions
+// ---------- Utility Functions ----------
+
 function getPlaceholder(context: WritingContext): string {
   const placeholders: Record<WritingContext, string> = {
-    email:
-      "Dear team, I wanted to address the concerns raised in yesterday's meeting...",
+    email: "Dear team, I wanted to address the concerns raised in yesterday's meeting...",
     message: "Hey, I've been thinking about what you said earlier...",
     social: "Can't believe how some people just don't get it...",
     journal: 'Today I felt overwhelmed because...',
