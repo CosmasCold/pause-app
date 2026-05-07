@@ -26,10 +26,12 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={`${inter.variable} ${playfair.variable}`}>
-      <body className="min-h-screen text-stone-800" 
+      <body 
+        className="min-h-screen text-stone-700"
         style={{ 
-          background: 'linear-gradient(135deg, #fef9ef 0%, #fdf6e8 25%, #faf3e0 50%, #f5ecd7 75%, #efe5cc 100%)' 
-        }}>
+          background: 'linear-gradient(135deg, #fefcf8 0%, #fdf8f0 20%, #f2f7f5 50%, #e8f4f0 75%, #dff0eb 100%)' 
+        }}
+      >
         <Toaster position="top-center" />
         {children}
       </body>
