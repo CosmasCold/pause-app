@@ -15,8 +15,10 @@ import { supabase } from '@/lib/supabase';
 import toast from 'react-hot-toast';
 
 export default function SettingsPage() {
-  const [profile, setProfile] = useState<{ email: string; tier: string } | null>(null);
+  const [profile, setProfile] = useState<{ email: string; tier: string; email_reports: boolean } | null>(null);
   const [loading, setLoading] = useState(true);
+  const [emailReports, setEmailReports] = useState(true);
+  const [savingReports, setSavingReports] = useState(false);
 
   const initialized = useRef(false);
 
@@ -28,7 +30,9 @@ export default function SettingsPage() {
         .select('*')
         .eq('id', user.id)
         .single();
-      setProfile(data || { email: user.email || '', tier: 'free' });
+      const profileData = data || { email: user.email || '', tier: 'free', email_reports: true };
+      setProfile(profileData);
+      setEmailReports(profileData.email_reports);
     }
     setLoading(false);
   };
@@ -39,6 +43,26 @@ export default function SettingsPage() {
       fetchProfile();
     }
   }, []);
+
+  const handleToggleReports = async () => {
+    const newValue = !emailReports;
+    setEmailReports(newValue);
+    setSavingReports(true);
+
+    const { error } = await supabase
+      .from('user_profiles')
+      .update({ email_reports: newValue })
+      .eq('id', (await supabase.auth.getUser()).data.user?.id);
+
+    setSavingReports(false);
+
+    if (error) {
+      toast.error('Failed to update preference');
+      setEmailReports(!newValue); // revert
+    } else {
+      toast.success(newValue ? 'Weekly reports enabled' : 'Weekly reports disabled');
+    }
+  };
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -124,10 +148,19 @@ export default function SettingsPage() {
               <p className="font-medium text-stone-700">Weekly Report</p>
               <p className="text-stone-500 text-sm">Receive a weekly summary of your communication patterns</p>
             </div>
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input type="checkbox" className="sr-only peer" defaultChecked />
-              <div className="w-11 h-6 bg-stone-200 peer-focus:ring-2 peer-focus:ring-teal-300 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-teal-500"></div>
-            </label>
+            <button
+              onClick={handleToggleReports}
+              disabled={savingReports}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                emailReports ? 'bg-teal-500' : 'bg-stone-300'
+              }`}
+            >
+              <span
+                className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${
+                  emailReports ? 'translate-x-6' : 'translate-x-1'
+                }`}
+              />
+            </button>
           </div>
         </div>
       </motion.div>
