@@ -1,1 +1,12 @@
 @import "tailwindcss";
+
+/* Show a hand cursor on all clickable elements */
+button,
+a,
+select,
+input[type="submit"],
+input[type="button"],
+input[type="reset"],
+[role="button"] {
+  cursor: pointer;
+}
