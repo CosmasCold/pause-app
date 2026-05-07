@@ -3,6 +3,36 @@ import { NextRequest, NextResponse } from 'next/server';
 
 const GROQ_API_KEY = process.env.GROQ_API_KEY || '';
 
+// ------ Local type definitions ------
+interface Bias {
+  type: string;
+  confidence: number;
+  excerpt: string;
+  explanation: string;
+}
+
+interface Assumption {
+  text: string;
+  severity: string;
+}
+
+interface EmotionalTone {
+  start: string;
+  middle: string;
+  end: string;
+  shift: string;
+  intensity: string;
+}
+
+interface AnalysisResult {
+  biases: Bias[];
+  emotionalTone: EmotionalTone;
+  assumptions: Assumption[];
+  regretScore: number;
+  suggestedRephrases: string[];
+  reflectiveQuestion: string;
+}
+
 const SYSTEM_PROMPT = `You are an expert communication coach. Analyze the text for tone, biases, assumptions, and regret probability.
 
 TONE must be exactly one of: neutral, concerned, frustrated, angry, appreciative, professional, mixed, sad.
@@ -13,11 +43,13 @@ For messages containing insults, profanity, or direct attacks, regretScore MUST 
 
 "suggestedRephrases" must be 1-3 complete, ready-to-send replacement messages. They must be full sentences that express the user's underlying concern or frustration in a respectful, constructive way. Do NOT include generic advice like "Try saying…". Every suggestion must be a standalone message the user could copy-paste and send immediately. If the text is overtly hostile, rewrite it into a calm expression of the same core feeling.
 
+IMPORTANT: If the input is repetitive nonsense (e.g., "vvvvvvv", "aaaaa", long strings of single characters, etc.), treat it as a neutral, non-harmful message with 0 regretScore, no biases, and intensity mild.
+
 Respond ONLY with valid JSON (no markdown, no backticks):
 
 {
   "biases": [
-    { "type": "string", "confidence": number, "excerpt": "exact phrase", "explanation": "brief" }
+    { "type": "string", "confidence": number (0-1), "excerpt": "exact phrase", "explanation": "brief" }
   ],
   "emotionalTone": {
     "start": "tone",
@@ -61,8 +93,9 @@ export async function POST(request: NextRequest) {
     }
 
     const hasProfanity = PROFANITY.test(text);
-    let aiResult = null;
+    let aiResult: AnalysisResult | null = null;
 
+    // Try AI if key available
     if (GROQ_API_KEY) {
       try {
         const response = await fetch(
@@ -92,30 +125,55 @@ export async function POST(request: NextRequest) {
           const data = await response.json();
           let content = data.choices[0].message.content.trim();
           content = content.replace(/```json\n?|```/g, '').trim();
-          aiResult = JSON.parse(content);
+          const parsed = JSON.parse(content) as Partial<AnalysisResult>;
+
+          // Sanitise and fix types
+          aiResult = {
+            biases: (parsed.biases || [])
+              .filter(
+                (b: Partial<Bias>) =>
+                  b.type && typeof b.type === 'string' && b.type !== 'string' && typeof b.confidence === 'number'
+              )
+              .map((b: Partial<Bias>): Bias => ({
+                type: b.type || '',
+                confidence: Math.min(1, Math.max(0, b.confidence || 0)),
+                excerpt: b.excerpt || '',
+                explanation: b.explanation || '',
+              })),
+            emotionalTone: {
+              start: parsed.emotionalTone?.start || 'neutral',
+              middle: parsed.emotionalTone?.middle || 'neutral',
+              end: parsed.emotionalTone?.end || 'neutral',
+              shift: parsed.emotionalTone?.shift || 'minimal',
+              intensity: parsed.emotionalTone?.intensity || 'mild',
+            },
+            assumptions: (parsed.assumptions || []).map(
+              (a: Partial<Assumption>): Assumption => ({
+                text: a.text || '',
+                severity: a.severity || 'low',
+              })
+            ),
+            regretScore: Math.min(100, Math.max(0, Math.round(parsed.regretScore || 0))),
+            suggestedRephrases: parsed.suggestedRephrases || [],
+            reflectiveQuestion: parsed.reflectiveQuestion || 'What do you want to achieve with this message?',
+          };
         } else {
           console.error('Groq API error:', await response.text());
           return NextResponse.json(
-            {
-              error:
-                'Our AI coach is taking a short break. Please try again in a moment.',
-            },
+            { error: 'Our AI coach is taking a short break. Please try again in a moment.' },
             { status: 502 }
           );
         }
       } catch (e) {
         console.error('Groq error:', e);
         return NextResponse.json(
-          {
-            error:
-              'Our AI coach is taking a short break. Please try again in a moment.',
-          },
+          { error: 'Our AI coach is taking a short break. Please try again in a moment.' },
           { status: 502 }
         );
       }
     }
 
-    // Safety net: override for profanity with real rephrase
+    // Safety net: override for profanity
     if (hasProfanity) {
       if (!aiResult) {
         aiResult = {
@@ -124,8 +182,7 @@ export async function POST(request: NextRequest) {
               type: 'Labeling',
               confidence: 0.95,
               excerpt: text.split(/[.!?]+/)[0].trim(),
-              explanation:
-                'Message contains hostile or derogatory language',
+              explanation: 'Message contains hostile or derogatory language',
             },
           ],
           emotionalTone: {
@@ -138,24 +195,20 @@ export async function POST(request: NextRequest) {
           assumptions: [{ text: text.trim(), severity: 'high' }],
           regretScore: 90,
           suggestedRephrases: [generateFallbackRephrase(text)],
-          reflectiveQuestion:
-            'What do you actually want the other person to understand?',
+          reflectiveQuestion: 'What do you actually want the other person to understand?',
         };
       } else {
+        // Enforce minimums for profanity
         aiResult.emotionalTone.start =
-          aiResult.emotionalTone.start === 'neutral'
-            ? 'angry'
-            : aiResult.emotionalTone.start;
+          aiResult.emotionalTone.start === 'neutral' ? 'angry' : aiResult.emotionalTone.start;
         aiResult.emotionalTone.intensity = 'intense';
-        aiResult.regretScore = Math.max(aiResult.regretScore ?? 80, 85);
+        aiResult.regretScore = Math.max(aiResult.regretScore, 85);
 
         if (
           !aiResult.suggestedRephrases ||
           aiResult.suggestedRephrases.length === 0 ||
           aiResult.suggestedRephrases.some(
-            (s: string) =>
-              s.toLowerCase().startsWith('try') ||
-              s.toLowerCase().startsWith('consider')
+            (s) => s.toLowerCase().startsWith('try') || s.toLowerCase().startsWith('consider')
           )
         ) {
           aiResult.suggestedRephrases = [generateFallbackRephrase(text)];
@@ -163,6 +216,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Fallback if no AI result at all
     if (!aiResult) {
       aiResult = {
         biases: [],
@@ -176,13 +230,21 @@ export async function POST(request: NextRequest) {
         assumptions: [],
         regretScore: 0,
         suggestedRephrases: [],
-        reflectiveQuestion:
-          'Is there anything you want to add to make your intent clearer?',
+        reflectiveQuestion: 'Is there anything you want to add to make your intent clearer?',
       };
     }
 
     // Normalize tone values
-    const validTones = ['neutral', 'concerned', 'frustrated', 'angry', 'appreciative', 'professional', 'mixed', 'sad'];
+    const validTones = [
+      'neutral',
+      'concerned',
+      'frustrated',
+      'angry',
+      'appreciative',
+      'professional',
+      'mixed',
+      'sad',
+    ];
     for (const key of ['start', 'middle', 'end'] as const) {
       if (!validTones.includes(aiResult.emotionalTone[key])) {
         aiResult.emotionalTone[key] = 'frustrated';
