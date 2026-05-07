@@ -71,35 +71,35 @@ export default function PricingPage() {
   const [loadingTier, setLoadingTier] = useState<string | null>(null);
 
   const handleSubscribe = async (tier: string) => {
-    setLoadingTier(tier);
+  setLoadingTier(tier);
 
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      toast.error('Please sign in first');
-      setLoadingTier(null);
-      return;
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user || !user.email) {
+    toast.error('Please sign in first');
+    setLoadingTier(null);
+    return;
+  }
+
+  try {
+    const response = await fetch('/api/create-checkout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tier, userId: user.id, email: user.email }),
+    });
+
+    const { url, error } = await response.json();
+
+    if (error) {
+      toast.error(error);
+    } else if (url) {
+      router.push(url);
     }
-
-    try {
-      const response = await fetch('/api/create-checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tier, userId: user.id }),
-      });
-
-      const { url, error } = await response.json();
-
-      if (error) {
-        toast.error(error);
-      } else if (url) {
-        router.push(url);
-      }
-    } catch {
-      toast.error('Something went wrong');
-    } finally {
-      setLoadingTier(null);
-    }
-  };
+  } catch {
+    toast.error('Something went wrong');
+  } finally {
+    setLoadingTier(null);
+  }
+};
 
   return (
     <>

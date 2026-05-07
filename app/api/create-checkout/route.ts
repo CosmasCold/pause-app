@@ -7,10 +7,10 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
 export async function POST(request: Request) {
   try {
-    const { tier, userId } = await request.json();
+    const { tier, userId, email } = await request.json();
 
-    if (!userId) {
-      return NextResponse.json({ error: 'Missing user ID' }, { status: 400 });
+    if (!userId || !email) {
+      return NextResponse.json({ error: 'Missing user ID or email' }, { status: 400 });
     }
 
     const priceId =
@@ -20,19 +20,30 @@ export async function POST(request: Request) {
 
     const supabase = await createClient();
 
-    // Retrieve existing customer ID or create a new one
+    // Ensure user_profile exists with real email
+    await supabase.from('user_profiles').upsert(
+      {
+        id: userId,
+        email,
+        tier: 'free',
+        analyses_today: 0,
+        last_analysis_date: new Date().toISOString().split('T')[0],
+      },
+      { onConflict: 'id' }
+    );
+
+    // Retrieve or create Stripe customer
     const { data: profile } = await supabase
       .from('user_profiles')
-      .select('stripe_customer_id, email')
+      .select('stripe_customer_id')
       .eq('id', userId)
       .single();
 
     let customerId = profile?.stripe_customer_id;
-    const userEmail = profile?.email || `user_${userId}@pause.app`;
 
     if (!customerId) {
       const customer = await stripe.customers.create({
-        email: userEmail,
+        email,
         metadata: { userId },
       });
       customerId = customer.id;
@@ -41,6 +52,9 @@ export async function POST(request: Request) {
         .from('user_profiles')
         .update({ stripe_customer_id: customerId })
         .eq('id', userId);
+    } else {
+      // Update existing customer email if changed
+      await stripe.customers.update(customerId, { email });
     }
 
     const session = await stripe.checkout.sessions.create({
