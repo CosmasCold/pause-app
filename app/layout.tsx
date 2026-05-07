@@ -26,7 +26,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={`${inter.variable} ${playfair.variable}`}>
-      <body className="min-h-screen bg-gradient-to-b from-stone-50 to-white">
+      <body className="min-h-screen bg-white text-stone-900">
         <Toaster position="top-center" />
         {children}
       </body>

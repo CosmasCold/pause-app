@@ -120,18 +120,19 @@ function extractAssumptions(text: string): Assumption[] {
     /as (usual|always|expected)/gi
   ];
 
-  return assumptionPatterns
-    .map(pattern => {
-      const match = text.match(pattern);
-      if (match) {
-        return {
-          text: match[0],
-          severity: (match[0].length > 30 ? 'high' : 'medium') as Assumption['severity']
-        };
-      }
-      return null;
-    })
-    .filter((item): item is Assumption => item !== null);
+  const results: Assumption[] = [];
+
+  assumptionPatterns.forEach(pattern => {
+    const match = text.match(pattern);
+    if (match) {
+      results.push({
+        text: match[0],
+        severity: match[0].length > 30 ? 'high' : 'medium'
+      });
+    }
+  });
+
+  return results;
 }
 
 function calculateRegretScore(data: AnalysisData): number {
