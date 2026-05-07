@@ -60,10 +60,10 @@ export default function Home() {
         animate={{ opacity: 1, y: 0 }}
         className="text-center mb-16"
       >
-        <h1 className="font-playfair text-6xl font-bold text-stone-900 mb-6">
+        <h1 className="font-playfair text-6xl font-bold text-stone-700 mb-6">
           Pause before you send.
         </h1>
-        <p className="text-xl text-stone-600 max-w-2xl mx-auto leading-relaxed">
+        <p className="text-xl text-stone-500 max-w-2xl mx-auto leading-relaxed">
           The space between feeling and sending. Check your writing for emotional tone, 
           cognitive biases, and hidden assumptions.
         </p>
@@ -77,8 +77,8 @@ export default function Home() {
             onClick={() => setContext(ctx)}
             className={`px-5 py-2.5 rounded-full text-sm font-medium transition-all duration-200 ${
               context === ctx 
-                ? 'bg-teal-600 text-white shadow-lg shadow-teal-200' 
-                : 'bg-white text-stone-600 hover:bg-stone-100 border border-stone-200'
+                ? 'bg-teal-500 text-white shadow-lg shadow-teal-200/50' 
+                : 'bg-white/80 text-stone-500 hover:bg-white border border-stone-200/60'
             }`}
           >
             {ctx.charAt(0).toUpperCase() + ctx.slice(1)}
@@ -89,16 +89,16 @@ export default function Home() {
       {/* Main Input Area */}
       <motion.div 
         layout
-        className="bg-white rounded-3xl shadow-2xl shadow-stone-200/50 border border-stone-100 p-8 mb-8"
+        className="bg-white/90 rounded-3xl shadow-xl shadow-stone-200/40 border border-stone-200/50 p-8 mb-8 backdrop-blur-sm"
       >
         <textarea
           value={text}
           onChange={(e) => setText(e.target.value)}
           placeholder={getPlaceholder(context)}
-          className="w-full h-48 text-lg text-stone-800 placeholder-stone-400 resize-none focus:outline-none leading-relaxed"
+          className="w-full h-48 text-lg text-stone-600 placeholder-stone-400 resize-none focus:outline-none leading-relaxed bg-transparent"
         />
         
-        <div className="flex justify-between items-center mt-6 pt-6 border-t border-stone-100">
+        <div className="flex justify-between items-center mt-6 pt-6 border-t border-stone-200/50">
           <div className="text-sm text-stone-400">
             {text.length} characters
           </div>
@@ -108,7 +108,7 @@ export default function Home() {
             whileTap={{ scale: 0.98 }}
             onClick={handleAnalyze}
             disabled={isAnalyzing}
-            className="bg-stone-900 text-white px-8 py-3.5 rounded-2xl font-medium flex items-center gap-2 hover:bg-stone-800 transition-colors disabled:opacity-50"
+            className="bg-teal-500 text-white px-8 py-3.5 rounded-2xl font-medium flex items-center gap-2 hover:bg-teal-600 transition-colors disabled:opacity-50 shadow-lg shadow-teal-200/30"
           >
             {isAnalyzing ? (
               <>
@@ -139,10 +139,10 @@ export default function Home() {
             <motion.div 
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              className="bg-white rounded-3xl p-8 shadow-xl border border-stone-100"
+              className="bg-white/90 rounded-3xl p-8 shadow-xl shadow-stone-200/40 border border-stone-200/50 backdrop-blur-sm"
             >
               <div className="flex items-center justify-between mb-6">
-                <h3 className="text-2xl font-playfair font-bold text-stone-900">
+                <h3 className="text-2xl font-playfair font-bold text-stone-700">
                   Regret Probability
                 </h3>
                 <div className="text-4xl font-bold font-playfair" 
@@ -151,7 +151,7 @@ export default function Home() {
                 </div>
               </div>
               
-              <div className="w-full bg-stone-100 rounded-full h-3">
+              <div className="w-full bg-stone-200/50 rounded-full h-3">
                 <motion.div
                   initial={{ width: 0 }}
                   animate={{ width: `${analysis.regretScore}%` }}
@@ -161,7 +161,7 @@ export default function Home() {
                 />
               </div>
               
-              <p className="mt-4 text-stone-600">
+              <p className="mt-4 text-stone-500">
                 {getScoreMessage(analysis.regretScore)}
               </p>
 
@@ -182,7 +182,7 @@ export default function Home() {
                 <ToneIndicator label="Closing" tone={analysis.emotionalTone.end} />
               </div>
               {analysis.emotionalTone.shift !== 'stable' && (
-                <div className="mt-4 p-4 bg-amber-50 rounded-2xl text-amber-800">
+                <div className="mt-4 p-4 bg-amber-50/80 rounded-2xl text-amber-700">
                   Tone shift detected: {analysis.emotionalTone.shift.replace(/-/g, ' → ')}
                 </div>
               )}
@@ -195,17 +195,17 @@ export default function Home() {
               ) : (
                 <div className="space-y-4">
                   {analysis.biases.map((bias, i) => (
-                    <div key={i} className="p-4 bg-stone-50 rounded-2xl">
+                    <div key={i} className="p-4 bg-stone-50/80 rounded-2xl">
                       <div className="flex items-start justify-between mb-2">
-                        <h4 className="font-semibold text-stone-900">{bias.type}</h4>
-                        <span className="text-sm text-stone-500">
+                        <h4 className="font-semibold text-stone-700">{bias.type}</h4>
+                        <span className="text-sm text-stone-400">
                           {Math.round(bias.confidence * 100)}% confidence
                         </span>
                       </div>
-                      <p className="text-sm text-stone-600 mb-2">
+                      <p className="text-sm text-stone-500 mb-2">
                         &ldquo;{bias.excerpt}&rdquo;
                       </p>
-                      <p className="text-xs text-stone-500">{bias.explanation}</p>
+                      <p className="text-xs text-stone-400">{bias.explanation}</p>
                     </div>
                   ))}
                 </div>
@@ -219,9 +219,9 @@ export default function Home() {
               ) : (
                 <div className="space-y-3">
                   {analysis.assumptions.map((assumption, i) => (
-                    <div key={i} className="flex items-center gap-3 p-3 bg-purple-50 rounded-xl">
+                    <div key={i} className="flex items-center gap-3 p-3 bg-purple-50/80 rounded-xl">
                       <div className="w-2 h-2 rounded-full bg-purple-400" />
-                      <p className="text-sm text-purple-900">
+                      <p className="text-sm text-purple-800">
                         &ldquo;{assumption.text}&rdquo;
                       </p>
                     </div>
@@ -238,10 +238,10 @@ export default function Home() {
                     <button
                       key={i}
                       onClick={() => handleRephraseApply(rephrase)}
-                      className="w-full text-left p-4 bg-teal-50 rounded-2xl hover:bg-teal-100 transition-colors group"
+                      className="w-full text-left p-4 bg-teal-50/80 rounded-2xl hover:bg-teal-100/80 transition-colors group"
                     >
-                      <p className="text-teal-900 mb-1">Suggestion {i + 1}:</p>
-                      <p className="text-stone-700">
+                      <p className="text-teal-800 mb-1">Suggestion {i + 1}:</p>
+                      <p className="text-stone-600">
                         &ldquo;{rephrase}&rdquo;
                       </p>
                       <p className="text-xs text-teal-600 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -257,13 +257,13 @@ export default function Home() {
             <motion.div 
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
-              className="bg-gradient-to-r from-teal-50 to-emerald-50 rounded-3xl p-8 border border-teal-100"
+              className="bg-gradient-to-r from-teal-50/80 to-emerald-50/80 rounded-3xl p-8 border border-teal-100/50 backdrop-blur-sm"
             >
               <div className="flex items-start gap-4">
                 <div className="text-3xl">💭</div>
                 <div>
                   <p className="text-sm text-teal-600 mb-2 font-medium">A moment of reflection</p>
-                  <p className="text-xl font-playfair text-teal-900 italic">
+                  <p className="text-xl font-playfair text-teal-800 italic">
                     &ldquo;{analysis.reflectiveQuestion}&rdquo;
                   </p>
                 </div>
@@ -320,11 +320,11 @@ function ResultsCard({ icon, title, children }: { icon: React.ReactNode; title: 
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-white rounded-3xl p-8 shadow-xl border border-stone-100"
+      className="bg-white/90 rounded-3xl p-8 shadow-xl shadow-stone-200/40 border border-stone-200/50 backdrop-blur-sm"
     >
       <div className="flex items-center gap-3 mb-6">
-        <div className="text-teal-600">{icon}</div>
-        <h3 className="text-xl font-playfair font-bold text-stone-900">{title}</h3>
+        <div className="text-teal-500">{icon}</div>
+        <h3 className="text-xl font-playfair font-bold text-stone-700">{title}</h3>
       </div>
       {children}
     </motion.div>
@@ -333,19 +333,19 @@ function ResultsCard({ icon, title, children }: { icon: React.ReactNode; title: 
 
 function ToneIndicator({ label, tone }: { label: string; tone: string }) {
   return (
-    <div className="text-center p-4 bg-stone-50 rounded-2xl">
-      <p className="text-xs text-stone-500 mb-2 uppercase tracking-wide">{label}</p>
-      <p className="font-semibold text-stone-900 capitalize">{tone}</p>
+    <div className="text-center p-4 bg-stone-50/80 rounded-2xl">
+      <p className="text-xs text-stone-400 mb-2 uppercase tracking-wide">{label}</p>
+      <p className="font-semibold text-stone-600 capitalize">{tone}</p>
     </div>
   );
 }
 
 function FeatureCard({ icon, title, description }: { icon: React.ReactNode; title: string; description: string }) {
   return (
-    <div className="p-8 bg-white rounded-3xl border border-stone-100 hover:shadow-lg transition-shadow">
-      <div className="text-teal-600 mb-4">{icon}</div>
-      <h3 className="font-semibold text-stone-900 mb-2">{title}</h3>
-      <p className="text-stone-600 text-sm leading-relaxed">{description}</p>
+    <div className="p-8 bg-white/80 rounded-3xl border border-stone-200/50 hover:shadow-lg hover:shadow-stone-200/30 transition-shadow backdrop-blur-sm">
+      <div className="text-teal-500 mb-4">{icon}</div>
+      <h3 className="font-semibold text-stone-600 mb-2">{title}</h3>
+      <p className="text-stone-400 text-sm leading-relaxed">{description}</p>
     </div>
   );
 }
@@ -363,9 +363,9 @@ function getPlaceholder(context: WritingContext): string {
 }
 
 function getScoreColor(score: number): string {
-  if (score < 30) return '#059669';
-  if (score < 60) return '#D97706';
-  return '#DC2626';
+  if (score < 30) return '#0d9488';
+  if (score < 60) return '#d97706';
+  return '#dc2626';
 }
 
 function getScoreMessage(score: number): string {

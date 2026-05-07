@@ -25,7 +25,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={`${inter.variable} ${playfair.variable}`}>
-      <body className="min-h-screen bg-gradient-to-br from-[#fdfcf9] via-[#f6f3ed] to-[#edf4f1] text-stone-700">
+      <body className="min-h-screen text-stone-600" 
+        style={{ 
+          background: 'linear-gradient(160deg, #fdf9f0 0%, #f9f0e2 20%, #eef5f2 50%, #e4f0ea 75%, #d8ede4 100%)' 
+        }}>
         <Toaster position="top-center" />
         {children}
       </body>
