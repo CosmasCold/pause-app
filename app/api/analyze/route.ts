@@ -1,7 +1,38 @@
 // app/api/analyze/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 
-const HF_API_KEY = process.env.HUGGINGFACE_API_KEY || '';
+const GROQ_API_KEY = process.env.GROQ_API_KEY || '';
+
+const SYSTEM_PROMPT = `You are an expert communication coach and cognitive behavioral therapist. Analyze the provided text for emotional tone, cognitive biases, assumptions about others, and regret probability (the likelihood the sender will regret sending this message). Respond ONLY with a valid JSON object — no markdown, no extra text. The JSON must have exactly this structure:
+
+{
+  "biases": [
+    {
+      "type": "string (e.g., All-or-Nothing, Mind Reading, Catastrophizing, Labeling, Blaming, Emotional Reasoning, Personalization)",
+      "confidence": number (0-1),
+      "excerpt": "the specific phrase from the text",
+      "explanation": "brief explanation of this bias"
+    }
+  ],
+  "emotionalTone": {
+    "start": "string (e.g., angry, frustrated, neutral, appreciative, etc.)",
+    "middle": "string",
+    "end": "string",
+    "shift": "string (stable, positive-to-negative, negative-to-positive, minimal)",
+    "intensity": "mild, moderate, or intense"
+  },
+  "assumptions": [
+    {
+      "text": "the exact phrase that shows assumption about others",
+      "severity": "low, medium, or high"
+    }
+  ],
+  "regretScore": number (0-100, where 0 = no regret likely, 100 = extremely likely to regret),
+  "suggestedRephrases": [
+    "A helpful, actionable rephrasing or communication advice (not just word swaps, but a full alternative sentence or strategy)"
+  ],
+  "reflectiveQuestion": "A thought-provoking question to help the user reconsider their message"
+}`;
 
 export async function POST(request: NextRequest) {
   try {
@@ -11,62 +42,47 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Text too short' }, { status: 400 });
     }
 
-    if (!HF_API_KEY) {
-      return NextResponse.json({ error: 'API key not configured' }, { status: 500 });
+    if (!GROQ_API_KEY) {
+      return NextResponse.json({ error: 'Groq API key not configured' }, { status: 500 });
     }
 
-    // Run both analyses
-    const [emotions, toxicity] = await Promise.all([
-      queryModel('SamLowe/roberta-base-go_emotions', text),
-      queryModel('unitary/toxic-bert', text).catch(() => [])
-    ]);
+    const userPrompt = `Context: ${context} message\nText: """${text}"""\n\nAnalyze the text above.`;
 
-    // Local bias detection
-    const biases = detectPatternBiases(text);
-    const assumptions = extractAssumptions(text);
-    const emotionalTone = mapEmotionToTone(emotions, text);
-    
-    // Calculate regret score
-    let score = 0;
-    const toxicityScore = toxicity?.[0]?.score ?? 0;
-    if (toxicityScore > 0.5) score += 30;
-    score += Math.min(biases.length * 15, 40);
-    if (emotionalTone.intensity === 'intense') score += 20;
-    if (emotionalTone.shift !== 'stable' && emotionalTone.shift !== 'minimal') score += 15;
-    
-    const multipliers: Record<string, number> = {
-      email: 1.2, social: 1.5, message: 1.0, journal: 0.5, essay: 0.8
-    };
-    score *= multipliers[context] ?? 1;
-    const regretScore = Math.min(Math.round(score), 100);
-
-    // Generate rephrases
-    const rephrases: string[] = [];
-    biases.forEach((bias: { type: string; excerpt: string }) => {
-      if (bias.type === 'All-or-Nothing') {
-        rephrases.push(bias.excerpt.replace(/always/g, 'sometimes').replace(/never/g, 'occasionally').replace(/everyone/g, 'some people'));
-      }
-      if (bias.type === 'Mind Reading') {
-        rephrases.push(bias.excerpt.replace(/you think/gi, 'I wonder if').replace(/you feel/gi, 'you might feel'));
-      }
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${GROQ_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'llama-3.1-8b-instant',
+        messages: [
+          { role: 'system', content: SYSTEM_PROMPT },
+          { role: 'user', content: userPrompt }
+        ],
+        temperature: 0.1,
+        max_tokens: 1000,
+      }),
     });
 
-    const questions = [
-      "What's one alternative explanation you haven't considered?",
-      "How might this read to someone having a difficult day?",
-      "What need are you trying to meet by sending this?",
-      "If you wait 24 hours, would this still feel urgent?",
-      "What's the outcome you actually want? Will this achieve it?",
-    ];
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Groq error:', errorText);
+      return NextResponse.json({ error: 'AI analysis failed' }, { status: 502 });
+    }
 
-    return NextResponse.json({
-      biases,
-      emotionalTone,
-      assumptions,
-      regretScore,
-      suggestedRephrases: rephrases.slice(0, 3),
-      reflectiveQuestion: questions[Math.floor(Math.random() * questions.length)]
-    });
+    const data = await response.json();
+    const content = data.choices[0].message.content;
+
+    // Parse the JSON from the response (strip any accidental markdown fences)
+    let cleaned = content.trim();
+    if (cleaned.startsWith('```json')) cleaned = cleaned.slice(7);
+    if (cleaned.startsWith('```')) cleaned = cleaned.slice(3);
+    if (cleaned.endsWith('```')) cleaned = cleaned.slice(0, -3);
+    cleaned = cleaned.trim();
+
+    const result = JSON.parse(cleaned);
+    return NextResponse.json(result);
 
   } catch (error) {
     console.error('Analysis error:', error);
@@ -75,114 +91,4 @@ export async function POST(request: NextRequest) {
       details: error instanceof Error ? error.message : 'Unknown error'
     }, { status: 500 });
   }
-}
-
-async function queryModel(model: string, text: string) {
-  const response = await fetch(
-    `https://api-inference.huggingface.co/models/${model}`,
-    {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${HF_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ inputs: text }),
-    }
-  );
-
-  if (!response.ok) {
-    console.error(`Model ${model} failed: ${response.status}`);
-    return [];
-  }
-
-  const data = await response.json();
-  return Array.isArray(data) ? data.flat() : [];
-}
-
-function detectPatternBiases(text: string) {
-  const patterns: Record<string, { keywords: string[]; weight: number }> = {
-    'All-or-Nothing': { keywords: ['always', 'never', 'everyone', 'no one', 'constantly', 'completely'], weight: 0.8 },
-    'Mind Reading': { keywords: ['you think', 'you feel', 'you believe', "you're trying", 'you want'], weight: 0.7 },
-    'Catastrophizing': { keywords: ['disaster', 'ruined', 'terrible', 'awful', 'worst', 'horrible'], weight: 0.6 },
-    'Personalization': { keywords: ['my fault', 'because of me', 'I always', 'I never'], weight: 0.7 },
-    'Emotional Reasoning': { keywords: ['I feel like', 'it feels like', 'seems like everyone'], weight: 0.5 }
-  };
-
-  const biases: { type: string; confidence: number; excerpt: string; explanation: string }[] = [];
-  const sentences = text.split(/[.!?]+/);
-  const explanations: Record<string, string> = {
-    'All-or-Nothing': 'Seeing things in black and white categories',
-    'Mind Reading': 'Assuming you know what others are thinking',
-    'Catastrophizing': 'Expecting the worst possible outcome',
-    'Personalization': 'Taking excessive responsibility for external events',
-    'Emotional Reasoning': 'Assuming feelings reflect reality'
-  };
-
-  sentences.forEach(sentence => {
-    const trimmed = sentence.trim();
-    if (!trimmed) return;
-    Object.entries(patterns).forEach(([biasName, pattern]) => {
-      const matchCount = pattern.keywords.filter(word => trimmed.toLowerCase().includes(word)).length;
-      if (matchCount >= 2) {
-        biases.push({
-          type: biasName,
-          confidence: Math.min(matchCount * pattern.weight, 0.95),
-          excerpt: trimmed,
-          explanation: explanations[biasName] || 'Cognitive pattern detected'
-        });
-      }
-    });
-  });
-
-  return biases;
-}
-
-function extractAssumptions(text: string) {
-  const patterns = [
-    /you (clearly|obviously|just|simply)/gi,
-    /you (don't|won't|can't|refuse to)/gi,
-    /I know (you|you're|your)/gi,
-    /as (usual|always|expected)/gi
-  ];
-
-  const results: { text: string; severity: string }[] = [];
-  patterns.forEach(pattern => {
-    const match = text.match(pattern);
-    if (match) {
-      results.push({ text: match[0], severity: match[0].length > 30 ? 'high' : 'medium' });
-    }
-  });
-  return results;
-}
-
-function mapEmotionToTone(emotions: { label: string; score: number }[], text: string) {
-  if (!emotions?.length) {
-    return { start: 'neutral', middle: 'neutral', end: 'neutral', shift: 'minimal', intensity: 'mild' };
-  }
-
-  const top = emotions.sort((a, b) => b.score - a.score).slice(0, 3);
-  const paragraphs = text.split('\n\n');
-  
-  let shift = 'stable';
-  if (paragraphs.length >= 2) {
-    const first = paragraphs[0].toLowerCase();
-    const last = paragraphs[paragraphs.length - 1].toLowerCase();
-    const pos = ['thank', 'appreciate', 'great', 'good', 'happy', 'please'];
-    const neg = ['however', 'but', 'unfortunately', 'disappointed', 'angry', 'frustrated'];
-    const fp = pos.filter(w => first.includes(w)).length;
-    const fn = neg.filter(w => first.includes(w)).length;
-    const lp = pos.filter(w => last.includes(w)).length;
-    const ln = neg.filter(w => last.includes(w)).length;
-    if (fp > fn && ln > lp) shift = 'positive-to-negative';
-    else if (fn > fp && lp > ln) shift = 'negative-to-positive';
-  }
-
-  const avg = top.reduce((s, e) => s + e.score, 0) / top.length;
-  return {
-    start: top[0]?.label || 'neutral',
-    middle: top[1]?.label || 'neutral',
-    end: top[2]?.label || 'neutral',
-    shift,
-    intensity: avg > 0.7 ? 'intense' : avg > 0.4 ? 'moderate' : 'mild'
-  };
 }
