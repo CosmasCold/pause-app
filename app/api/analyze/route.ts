@@ -3,36 +3,6 @@ import { NextRequest, NextResponse } from 'next/server';
 
 const GROQ_API_KEY = process.env.GROQ_API_KEY || '';
 
-// ------ Local type definitions ------
-interface Bias {
-  type: string;
-  confidence: number;
-  excerpt: string;
-  explanation: string;
-}
-
-interface Assumption {
-  text: string;
-  severity: string;
-}
-
-interface EmotionalTone {
-  start: string;
-  middle: string;
-  end: string;
-  shift: string;
-  intensity: string;
-}
-
-interface AnalysisResult {
-  biases: Bias[];
-  emotionalTone: EmotionalTone;
-  assumptions: Assumption[];
-  regretScore: number;
-  suggestedRephrases: string[];
-  reflectiveQuestion: string;
-}
-
 const SYSTEM_PROMPT = `You are an expert communication coach. Analyze the text for tone, biases, assumptions, and regret probability.
 
 TONE must be exactly one of: neutral, concerned, frustrated, angry, appreciative, professional, mixed, sad.
@@ -93,7 +63,7 @@ export async function POST(request: NextRequest) {
     }
 
     const hasProfanity = PROFANITY.test(text);
-    let aiResult: AnalysisResult | null = null;
+    let aiResult: any = null; // eslint-disable-line @typescript-eslint/no-explicit-any
 
     // Try AI if key available
     if (GROQ_API_KEY) {
@@ -125,38 +95,7 @@ export async function POST(request: NextRequest) {
           const data = await response.json();
           let content = data.choices[0].message.content.trim();
           content = content.replace(/```json\n?|```/g, '').trim();
-          const parsed = JSON.parse(content) as Partial<AnalysisResult>;
-
-          // Sanitise and fix types
-          aiResult = {
-            biases: (parsed.biases || [])
-              .filter(
-                (b: Partial<Bias>) =>
-                  b.type && typeof b.type === 'string' && b.type !== 'string' && typeof b.confidence === 'number'
-              )
-              .map((b: Partial<Bias>): Bias => ({
-                type: b.type || '',
-                confidence: Math.min(1, Math.max(0, b.confidence || 0)),
-                excerpt: b.excerpt || '',
-                explanation: b.explanation || '',
-              })),
-            emotionalTone: {
-              start: parsed.emotionalTone?.start || 'neutral',
-              middle: parsed.emotionalTone?.middle || 'neutral',
-              end: parsed.emotionalTone?.end || 'neutral',
-              shift: parsed.emotionalTone?.shift || 'minimal',
-              intensity: parsed.emotionalTone?.intensity || 'mild',
-            },
-            assumptions: (parsed.assumptions || []).map(
-              (a: Partial<Assumption>): Assumption => ({
-                text: a.text || '',
-                severity: a.severity || 'low',
-              })
-            ),
-            regretScore: Math.min(100, Math.max(0, Math.round(parsed.regretScore || 0))),
-            suggestedRephrases: parsed.suggestedRephrases || [],
-            reflectiveQuestion: parsed.reflectiveQuestion || 'What do you want to achieve with this message?',
-          };
+          aiResult = JSON.parse(content);
         } else {
           console.error('Groq API error:', await response.text());
           return NextResponse.json(
@@ -208,7 +147,7 @@ export async function POST(request: NextRequest) {
           !aiResult.suggestedRephrases ||
           aiResult.suggestedRephrases.length === 0 ||
           aiResult.suggestedRephrases.some(
-            (s) => s.toLowerCase().startsWith('try') || s.toLowerCase().startsWith('consider')
+            (s: string) => s.toLowerCase().startsWith('try') || s.toLowerCase().startsWith('consider')
           )
         ) {
           aiResult.suggestedRephrases = [generateFallbackRephrase(text)];
@@ -235,16 +174,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Normalize tone values
-    const validTones = [
-      'neutral',
-      'concerned',
-      'frustrated',
-      'angry',
-      'appreciative',
-      'professional',
-      'mixed',
-      'sad',
-    ];
+    const validTones = ['neutral', 'concerned', 'frustrated', 'angry', 'appreciative', 'professional', 'mixed', 'sad'];
     for (const key of ['start', 'middle', 'end'] as const) {
       if (!validTones.includes(aiResult.emotionalTone[key])) {
         aiResult.emotionalTone[key] = 'frustrated';
