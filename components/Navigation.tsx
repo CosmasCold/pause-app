@@ -36,9 +36,14 @@ export default function Navigation() {
       <nav className="fixed top-0 left-0 right-0 z-40 bg-white/80 backdrop-blur-lg border-b border-stone-100">
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
-            <span className="text-2xl">⏸️</span>
-            <span className="font-playfair text-xl font-bold text-stone-700">Pause</span>
-          </Link>
+  <span className="text-teal-500">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="6" y="4" width="4" height="16" rx="2" />
+      <rect x="14" y="4" width="4" height="16" rx="2" />
+    </svg>
+  </span>
+  <span className="font-playfair text-xl font-bold text-stone-700">Pause</span>
+</Link>
 
           <div className="flex items-center gap-4">
             {user ? (
