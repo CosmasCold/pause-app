@@ -1,8 +1,9 @@
+// app/api/analyze/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 
 const GROQ_API_KEY = process.env.GROQ_API_KEY || '';
 
-const SYSTEM_PROMPT = `You are a blunt, honest communication coach. Analyze the text for emotional tone, cognitive biases, assumptions about others, and regret probability.
+const SYSTEM_PROMPT = `You are an expert communication coach. Analyze the text for tone, biases, assumptions, and regret probability.
 
 TONE must be exactly one of: neutral, concerned, frustrated, angry, appreciative, professional, mixed, sad.
 SHIFT must be exactly one of: stable, positive-to-negative, negative-to-positive, minimal.
@@ -10,7 +11,9 @@ INTENSITY must be exactly one of: mild, moderate, intense.
 
 For messages containing insults, profanity, or direct attacks, regretScore MUST be at least 85.
 
-Respond ONLY with valid JSON (no markdown, no backticks) with this exact structure:
+"suggestedRephrases" must be 1-3 complete, ready-to-send replacement messages. They must be full sentences that express the user's underlying concern or frustration in a respectful, constructive way. Do NOT include generic advice like "Try saying...". Every suggestion must be a standalone message the user could copy-paste and send immediately. If the text is overtly hostile, rewrite it into a calm expression of the same core feeling.
+
+Respond ONLY with valid JSON (no markdown, no backticks):
 
 {
   "biases": [
@@ -27,11 +30,24 @@ Respond ONLY with valid JSON (no markdown, no backticks) with this exact structu
     { "text": "exact phrase", "severity": "low, medium, or high" }
   ],
   "regretScore": number (0-100),
-  "suggestedRephrases": [ "actionable rephrasing advice" ],
+  "suggestedRephrases": [ "complete replacement message", ... ],
   "reflectiveQuestion": "thought-provoking question"
 }`;
 
 const PROFANITY = /\b(fuck|shit|asshole|bitch|bastard|dick|piss|cunt|motherfucker|douche|scumbag|moron|idiot|stupid|hate|worthless|useless|pathetic|garbage|trash|scum|kill yourself)\b/i;
+
+// Generates a basic rephrase from an aggressive sentence
+function generateFallbackRephrase(text: string): string {
+  const cleaned = text
+    .replace(/\b(fuck|shit|asshole|bitch|bastard|dick|piss|cunt|motherfucker|douche|scumbag|moron|idiot|stupid|hate)\b/gi, '')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
+  
+  if (cleaned.length < 10) {
+    return "I'm feeling really upset right now and I need to express that. Can we talk about what happened?";
+  }
+  return `I'm feeling very frustrated. ${cleaned}. I'd like to discuss this calmly.`;
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -44,6 +60,7 @@ export async function POST(request: NextRequest) {
     const hasProfanity = PROFANITY.test(text);
     let aiResult = null;
 
+    // Try AI if key available
     if (GROQ_API_KEY) {
       try {
         const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -56,10 +73,10 @@ export async function POST(request: NextRequest) {
             model: 'llama-3.1-8b-instant',
             messages: [
               { role: 'system', content: SYSTEM_PROMPT },
-              { role: 'user', content: `Context: ${context}\nText: """${text}"""\n\nAnalyze. If this contains ANY profanity or insults, regretScore must be 85 or higher.` }
+              { role: 'user', content: `Context: ${context}\nText: """${text}"""\n\nAnalyze. The suggestedRephrases must be complete, ready-to-send alternative messages.` }
             ],
-            temperature: 0.1,
-            max_tokens: 1000,
+            temperature: 0.2,
+            max_tokens: 1200,
           }),
         });
 
@@ -74,7 +91,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Safety net: override for profanity
+    // Safety net: override for profanity with real rephrase
     if (hasProfanity) {
       if (!aiResult) {
         aiResult = {
@@ -87,14 +104,20 @@ export async function POST(request: NextRequest) {
           emotionalTone: { start: 'angry', middle: 'angry', end: 'angry', shift: 'stable', intensity: 'intense' },
           assumptions: [{ text: text.trim(), severity: 'high' }],
           regretScore: 90,
-          suggestedRephrases: ['Express your frustration without personal attacks. Try: "I feel really upset right now and need to talk about this."'],
+          suggestedRephrases: [generateFallbackRephrase(text)],
           reflectiveQuestion: 'What do you actually want the other person to understand?'
         };
       } else {
-        // Enforce minimums
+        // Enforce minimums and ensure rephrases are actual sentences
         aiResult.emotionalTone.start = aiResult.emotionalTone.start === 'neutral' ? 'angry' : aiResult.emotionalTone.start;
         aiResult.emotionalTone.intensity = 'intense';
         aiResult.regretScore = Math.max(aiResult.regretScore ?? 80, 85);
+
+        // If AI returned advice-like strings, replace with fallback rephrase
+        if (!aiResult.suggestedRephrases || aiResult.suggestedRephrases.length === 0 ||
+            aiResult.suggestedRephrases.some((s: string) => s.toLowerCase().startsWith('try') || s.toLowerCase().startsWith('consider'))) {
+          aiResult.suggestedRephrases = [generateFallbackRephrase(text)];
+        }
       }
     }
 
@@ -109,7 +132,7 @@ export async function POST(request: NextRequest) {
       };
     }
 
-    // Normalize any non-standard tone values that AI might return
+    // Normalize tone values
     const validTones = ['neutral', 'concerned', 'frustrated', 'angry', 'appreciative', 'professional', 'mixed', 'sad'];
     for (const key of ['start', 'middle', 'end'] as const) {
       if (!validTones.includes(aiResult.emotionalTone[key])) {
