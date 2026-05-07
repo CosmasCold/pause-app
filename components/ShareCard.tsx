@@ -3,11 +3,7 @@
 
 import { useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import { 
-  Link2, 
-  Download,
-  X 
-} from 'lucide-react';
+import { Link2, Download, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 interface ShareCardProps {
@@ -19,42 +15,50 @@ interface ShareCardProps {
   textPreview: string;
 }
 
-export default function ShareCard({ 
-  isOpen, 
-  onClose, 
-  regretScore, 
-  biasesDetected, 
+export default function ShareCard({
+  isOpen,
+  onClose,
+  regretScore,
+  biasesDetected,
   context,
-  textPreview 
+  textPreview,
 }: ShareCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
   const [isGenerating, setIsGenerating] = useState(false);
 
-  const scoreEmoji = regretScore < 30 ? '\u{1F9D8}' : regretScore < 60 ? '\u{1F914}' : '\u{1F6A8}';
-  const scoreMessage = regretScore < 30 
-    ? 'Clear-headed communication' 
-    : regretScore < 60 
-    ? 'Worth a second look' 
-    : 'Saved by the pause';
+  const scoreEmoji =
+    regretScore < 30 ? '\u{1F9D8}' : regretScore < 60 ? '\u{1F914}' : '\u{1F6A8}';
+  const scoreMessage =
+    regretScore < 30
+      ? 'Clear-headed communication'
+      : regretScore < 60
+      ? 'Worth a second look'
+      : 'Saved by the pause';
 
-  const shareText = `I almost sent this ${context}, but Pause caught ${biasesDetected} cognitive ${biasesDetected === 1 ? 'bias' : 'biases'} and gave it a ${regretScore}% regret probability. ${scoreEmoji}\n\n\u201C${textPreview.substring(0, 100)}...\u201D\n\n${scoreMessage}.`;
+  const shareText = `I almost sent this ${context}, but Pause caught ${biasesDetected} cognitive ${
+    biasesDetected === 1 ? 'bias' : 'biases'
+  } and gave it a ${regretScore}% regret probability. ${scoreEmoji}\n\n\u201C${textPreview.substring(
+    0,
+    100
+  )}...\u201D\n\n${scoreMessage}.`;
 
   const handleDownload = async () => {
     if (!cardRef.current) return;
     setIsGenerating(true);
-    
+
     try {
       const { toPng } = await import('html-to-image');
-      const dataUrl = await toPng(cardRef.current, { 
+      const dataUrl = await toPng(cardRef.current, {
         quality: 0.95,
-        backgroundColor: '#ffffff'
+        backgroundColor: '#ffffff',
+        pixelRatio: 2,
       });
-      
+
       const link = document.createElement('a');
       link.download = `pause-analysis-${Date.now()}.png`;
       link.href = dataUrl;
       link.click();
-      
+
       toast.success('Image downloaded!');
     } catch {
       toast.error('Failed to generate image');
@@ -68,7 +72,6 @@ export default function ShareCard({
       await navigator.clipboard.writeText(text);
       return true;
     } catch {
-      // Fallback for older browsers
       const textarea = document.createElement('textarea');
       textarea.value = text;
       document.body.appendChild(textarea);
@@ -93,9 +96,7 @@ export default function ShareCard({
 
   const handleLinkedInShare = async () => {
     await copyToClipboard(shareText);
-    toast.success('Analysis copied! Paste with Ctrl+V on LinkedIn or anywhere you like.', {
-      duration: 5000,
-    });
+    toast.success('Analysis copied! Paste with Ctrl+V on LinkedIn or anywhere you like.');
   };
 
   if (!isOpen) return null;
@@ -116,22 +117,27 @@ export default function ShareCard({
         className="bg-white rounded-3xl max-w-lg w-full shadow-2xl overflow-hidden"
       >
         <div className="flex justify-between items-center p-6 border-b border-stone-200">
-          <h2 className="text-xl font-playfair font-bold text-stone-800">Share Your Pause</h2>
+          <h2 className="text-xl font-playfair font-bold text-stone-800">
+            Share Your Pause
+          </h2>
           <button onClick={onClose} className="text-stone-400 hover:text-stone-600">
             <X className="w-5 h-5" />
           </button>
         </div>
 
         <div className="p-6">
-          <div 
+          <div
             ref={cardRef}
             className="bg-gradient-to-br from-teal-50 to-emerald-50 rounded-2xl p-8 border border-teal-100"
+            style={{ maxWidth: '360px', margin: '0 auto' }}
           >
             <div className="text-center mb-6">
               <div className="text-5xl mb-4">{scoreEmoji}</div>
-              <div className="text-4xl font-bold font-playfair mb-2" 
-                style={{ 
-                  color: regretScore < 30 ? '#059669' : regretScore < 60 ? '#D97706' : '#DC2626' 
+              <div
+                className="text-4xl font-bold font-playfair mb-2"
+                style={{
+                  color:
+                    regretScore < 30 ? '#059669' : regretScore < 60 ? '#D97706' : '#DC2626',
                 }}
               >
                 {regretScore}%
@@ -141,13 +147,19 @@ export default function ShareCard({
 
             <div className="bg-white/80 rounded-xl p-4 mb-4">
               <p className="text-sm text-stone-600 mb-2">Almost sent as {context}:</p>
-              <p className="text-stone-800 italic">
-                &ldquo;{textPreview.substring(0, 120)}{textPreview.length > 120 ? '...' : ''}&rdquo;
+              <p
+                className="text-stone-800 italic break-words"
+                style={{ maxWidth: '100%', wordBreak: 'break-word' }}
+              >
+                &ldquo;{textPreview.substring(0, 120)}
+                {textPreview.length > 120 ? '...' : ''}&rdquo;
               </p>
             </div>
 
             <div className="flex justify-between items-center text-sm text-stone-600">
-              <span>{biasesDetected} {biasesDetected === 1 ? 'bias' : 'biases'} detected</span>
+              <span>
+                {biasesDetected} {biasesDetected === 1 ? 'bias' : 'biases'} detected
+              </span>
             </div>
           </div>
 
@@ -157,11 +169,11 @@ export default function ShareCard({
               className="flex items-center justify-center gap-2 p-3 bg-black text-white rounded-2xl hover:bg-stone-800 transition-colors"
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
               </svg>
               Twitter
             </button>
-            
+
             <button
               onClick={handleLinkedInShare}
               className="flex items-center justify-center gap-2 p-3 bg-[#0A66C2] text-white rounded-2xl hover:bg-[#004182] transition-colors"
@@ -169,7 +181,7 @@ export default function ShareCard({
               <Link2 className="w-4 h-4" />
               LinkedIn
             </button>
-            
+
             <button
               onClick={handleCopyLink}
               className="flex items-center justify-center gap-2 p-3 bg-stone-100 text-stone-700 rounded-2xl hover:bg-stone-200 transition-colors"
@@ -177,7 +189,7 @@ export default function ShareCard({
               <Link2 className="w-4 h-4" />
               Copy Text
             </button>
-            
+
             <button
               onClick={handleDownload}
               disabled={isGenerating}
