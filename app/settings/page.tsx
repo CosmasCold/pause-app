@@ -17,12 +17,17 @@ import toast from 'react-hot-toast';
 import { useSearchParams } from 'next/navigation';
 
 function SettingsContent() {
-  const [profile, setProfile] = useState<{ email: string; tier: string; email_reports: boolean } | null>(null);
+  const [profile, setProfile] = useState<{
+    email: string;
+    tier: string;
+    email_reports: boolean;
+  } | null>(null);
   const [loading, setLoading] = useState(true);
   const [emailReports, setEmailReports] = useState(true);
   const [savingReports, setSavingReports] = useState(false);
 
   const initialized = useRef(false);
+  const confirmedRef = useRef(false);
   const searchParams = useSearchParams();
 
   const fetchProfile = async () => {
@@ -33,7 +38,11 @@ function SettingsContent() {
         .select('*')
         .eq('id', user.id)
         .single();
-      const profileData = data || { email: user.email || '', tier: 'free', email_reports: true };
+      const profileData = data || {
+        email: user.email || '',
+        tier: 'free',
+        email_reports: true,
+      };
       setProfile(profileData);
       setEmailReports(profileData.email_reports);
     }
@@ -47,10 +56,11 @@ function SettingsContent() {
     }
   }, []);
 
-  // Handle Stripe checkout session redirect
+  // Handle Stripe checkout session redirect (run only once)
   useEffect(() => {
     const sessionId = searchParams.get('session_id');
-    if (!sessionId || !profile) return;
+    if (!sessionId || !profile || confirmedRef.current) return;
+    confirmedRef.current = true;
 
     const confirmPayment = async () => {
       try {
@@ -61,8 +71,8 @@ function SettingsContent() {
         });
         const result = await response.json();
         if (result.tier) {
-          setProfile((prev) => prev ? { ...prev, tier: result.tier } : prev);
-          toast.success(`Upgraded to ${result.tier}!`);
+          setProfile((prev) => (prev ? { ...prev, tier: result.tier } : prev));
+          toast.success(`Upgraded to ${result.tier}!`, { duration: 4000 });
         }
       } catch {
         toast.error('Could not confirm payment');
@@ -88,7 +98,9 @@ function SettingsContent() {
       toast.error('Failed to update preference');
       setEmailReports(!newValue);
     } else {
-      toast.success(newValue ? 'Weekly reports enabled' : 'Weekly reports disabled');
+      toast.success(
+        newValue ? 'Weekly reports enabled' : 'Weekly reports disabled'
+      );
     }
   };
 
@@ -120,7 +132,9 @@ function SettingsContent() {
 
   return (
     <main className="max-w-2xl mx-auto px-4 py-12">
-      <h1 className="text-4xl font-playfair font-bold text-stone-800 mb-8">Settings</h1>
+      <h1 className="text-4xl font-playfair font-bold text-stone-800 mb-8">
+        Settings
+      </h1>
 
       {/* Account Section */}
       <motion.div
@@ -144,7 +158,9 @@ function SettingsContent() {
           <div className="flex items-center justify-between py-3 border-t border-stone-200/50">
             <div>
               <p className="font-medium text-stone-700">Plan</p>
-              <p className="text-stone-500 text-sm capitalize">{profile?.tier || 'free'}</p>
+              <p className="text-stone-500 text-sm capitalize">
+                {profile?.tier || 'free'}
+              </p>
             </div>
             {profile?.tier === 'free' ? (
               <a
@@ -179,7 +195,9 @@ function SettingsContent() {
           <div className="flex items-center justify-between py-3">
             <div>
               <p className="font-medium text-stone-700">Weekly Report</p>
-              <p className="text-stone-500 text-sm">Receive a weekly summary of your communication patterns</p>
+              <p className="text-stone-500 text-sm">
+                Receive a weekly summary of your communication patterns
+              </p>
             </div>
             <button
               onClick={handleToggleReports}
@@ -230,7 +248,9 @@ function SettingsContent() {
               <Trash2 className="w-5 h-5 text-red-400" />
               <div>
                 <p className="font-medium text-red-600">Delete Account</p>
-                <p className="text-stone-500 text-sm">Permanently delete all your data</p>
+                <p className="text-stone-500 text-sm">
+                  Permanently delete all your data
+                </p>
               </div>
             </div>
             <ChevronRight className="w-4 h-4 text-red-400" />
@@ -243,11 +263,13 @@ function SettingsContent() {
 
 export default function SettingsPage() {
   return (
-    <Suspense fallback={
-      <main className="max-w-2xl mx-auto px-4 py-12">
-        <p className="text-stone-600 text-center">Loading settings...</p>
-      </main>
-    }>
+    <Suspense
+      fallback={
+        <main className="max-w-2xl mx-auto px-4 py-12">
+          <p className="text-stone-600 text-center">Loading settings...</p>
+        </main>
+      }
+    >
       <SettingsContent />
     </Suspense>
   );
