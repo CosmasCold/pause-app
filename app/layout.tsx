@@ -1,4 +1,3 @@
-// app/layout.tsx
 import type { Metadata } from 'next'
 import { Inter, Playfair_Display } from 'next/font/google'
 import './globals.css'
@@ -26,13 +25,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={`${inter.variable} ${playfair.variable}`}>
-      <body 
-        className="min-h-screen"
-        style={{ 
-          background: 'linear-gradient(135deg, #fdfcf9 0%, #f8f5f0 25%, #f0f4f2 50%, #edf4f1 75%, #eaf2ef 100%)',
-          color: '#44403c'
-        }}
-      >
+      <body className="min-h-screen bg-gradient-to-br from-[#fdfcf9] via-[#f6f3ed] to-[#edf4f1] text-stone-700">
         <Toaster position="top-center" />
         {children}
       </body>
