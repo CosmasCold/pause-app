@@ -38,6 +38,41 @@ export default function Home() {
       return;
     }
 
+    // Check free tier limits
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const { data: profile } = await supabase
+        .from('user_profiles')
+        .select('tier, analyses_today, last_analysis_date')
+        .eq('id', user.id)
+        .single();
+
+      const isFree = !profile || profile.tier === 'free';
+      if (isFree) {
+        const today = new Date().toISOString().split('T')[0];
+        let currentCount = profile?.analyses_today || 0;
+
+        // Reset if new day
+        if (profile && profile.last_analysis_date !== today) {
+          currentCount = 0;
+          await supabase
+            .from('user_profiles')
+            .update({ analyses_today: 0, last_analysis_date: today })
+            .eq('id', user.id);
+        }
+
+        if (currentCount >= 3) {
+          toast.error('Free plan limit: 3 analyses per day. Upgrade to Pro for unlimited.');
+          return;
+        }
+
+        if (text.length > 1000) {
+          toast.error('Free plan limit: 1,000 characters. Upgrade to Pro for longer text.');
+          return;
+        }
+      }
+    }
+
     setIsAnalyzing(true);
     try {
       const result = await analyzeText(text, context);
@@ -45,6 +80,34 @@ export default function Home() {
       setShowResults(true);
       setIsSaved(false);
       toast.success('Analysis complete');
+
+      // Increment counter for free users
+      if (user) {
+        const { data: profile } = await supabase
+          .from('user_profiles')
+          .select('tier, analyses_today, last_analysis_date')
+          .eq('id', user.id)
+          .single();
+
+        if (!profile || profile.tier === 'free') {
+          const today = new Date().toISOString().split('T')[0];
+          const isNewDay = profile?.last_analysis_date !== today;
+          const newCount = isNewDay ? 1 : (profile?.analyses_today || 0) + 1;
+
+          await supabase
+            .from('user_profiles')
+            .upsert(
+              {
+                id: user.id,
+                email: user.email,
+                tier: 'free',
+                analyses_today: newCount,
+                last_analysis_date: today,
+              },
+              { onConflict: 'id' }
+            );
+        }
+      }
     } catch (error) {
       const message =
         error instanceof Error
@@ -62,58 +125,57 @@ export default function Home() {
     toast.success('Rephrasing applied!');
   };
 
- const handleSaveAnalysis = async () => {
-  if (!analysis || isSaved) return;
-  setIsSaving(true);
+  const handleSaveAnalysis = async () => {
+    if (!analysis || isSaved) return;
+    setIsSaving(true);
 
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    toast.error('Sign in to save analyses');
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      toast.error('Sign in to save analyses');
+      setIsSaving(false);
+      return;
+    }
+
+    // Ensure user profile exists
+    const { error: profileError } = await supabase
+      .from('user_profiles')
+      .upsert(
+        {
+          id: user.id,
+          email: user.email,
+          tier: 'free',
+          analyses_today: 0,
+          last_analysis_date: new Date().toISOString().split('T')[0],
+        },
+        { onConflict: 'id' }
+      );
+
+    if (profileError) {
+      console.error('Profile error:', profileError);
+      toast.error(`Profile error: ${profileError.message}`);
+      setIsSaving(false);
+      return;
+    }
+
+    const { error } = await supabase.from('saved_analyses').insert({
+      user_id: user.id,
+      original_text: text,
+      context,
+      regret_score: analysis.regretScore,
+      biases: analysis.biases,
+      emotional_tone: analysis.emotionalTone,
+      assumptions: analysis.assumptions,
+    });
+
+    if (error) {
+      console.error('Save error:', error);
+      toast.error(`Failed to save: ${error.message || error}`);
+    } else {
+      setIsSaved(true);
+      toast.success('Saved to history!');
+    }
     setIsSaving(false);
-    return;
-  }
-
-  // Ensure user profile exists (fixes the foreign key error)
-  const { error: profileError } = await supabase
-    .from('user_profiles')
-    .upsert(
-      {
-        id: user.id,
-        email: user.email,
-        tier: 'free',
-        analyses_today: 0,
-        last_analysis_date: new Date().toISOString().split('T')[0],
-      },
-      { onConflict: 'id' }
-    );
-
-  if (profileError) {
-  console.error('Profile error:', profileError);
-  toast.error(`Profile error: ${profileError.message}`);
-  setIsSaving(false);
-  return;
-}
-
-  // Now save the analysis
-  const { error } = await supabase.from('saved_analyses').insert({
-    user_id: user.id,
-    original_text: text,
-    context,
-    regret_score: analysis.regretScore,
-    biases: analysis.biases,
-    emotional_tone: analysis.emotionalTone,
-    assumptions: analysis.assumptions,
-  });
-
-  if (error) {
-    console.error('Save error:', error);
-    toast.error(`Failed to save: ${error.message || error}`);
-  } else {
-    setIsSaved(true);
-    toast.success('Saved to history!');
-  }
-  setIsSaving(false);
-};
+  };
 
   return (
     <main className="max-w-6xl mx-auto px-4 py-12">

@@ -20,9 +20,9 @@ const plans = [
       'Basic bias detection',
       'Regret probability score',
       '1,000 character limit',
-      'Email & message contexts',
+      'All writing contexts',
     ],
-    cta: 'Get Started',
+    cta: 'Current Plan',
     popular: false,
     priceId: null,
   },
@@ -33,13 +33,11 @@ const plans = [
     description: 'For professionals who communicate daily',
     features: [
       'Unlimited analyses',
-      'Advanced bias detection',
-      'Tone shift analysis',
-      'Suggested rephrases',
+      'Advanced tone & bias detection',
+      'Unlimited text length',
       'Save analysis history',
-      'Export PDF reports',
-      'All writing contexts',
-      'Priority support',
+      'Rephrasing suggestions',
+      'Reflective questions',
     ],
     cta: 'Start Pro Trial',
     popular: true,
@@ -54,11 +52,7 @@ const plans = [
       'Everything in Pro',
       'Team analytics dashboard',
       'Admin controls',
-      'API access',
-      'Slack integration',
-      'Custom reflection prompts',
-      'Dedicated support',
-      'SSO available',
+      'Priority support',
     ],
     cta: 'Contact Sales',
     popular: false,
@@ -71,35 +65,35 @@ export default function PricingPage() {
   const [loadingTier, setLoadingTier] = useState<string | null>(null);
 
   const handleSubscribe = async (tier: string) => {
-  setLoadingTier(tier);
+    setLoadingTier(tier);
 
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user || !user.email) {
-    toast.error('Please sign in first');
-    setLoadingTier(null);
-    return;
-  }
-
-  try {
-    const response = await fetch('/api/create-checkout', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ tier, userId: user.id, email: user.email }),
-    });
-
-    const { url, error } = await response.json();
-
-    if (error) {
-      toast.error(error);
-    } else if (url) {
-      router.push(url);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user || !user.email) {
+      toast.error('Please sign in first');
+      setLoadingTier(null);
+      return;
     }
-  } catch {
-    toast.error('Something went wrong');
-  } finally {
-    setLoadingTier(null);
-  }
-};
+
+    try {
+      const response = await fetch('/api/create-checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tier, userId: user.id, email: user.email }),
+      });
+
+      const { url, error } = await response.json();
+
+      if (error) {
+        toast.error(error);
+      } else if (url) {
+        router.push(url);
+      }
+    } catch {
+      toast.error('Something went wrong');
+    } finally {
+      setLoadingTier(null);
+    }
+  };
 
   return (
     <>
