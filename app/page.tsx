@@ -81,8 +81,9 @@ export default function Home() {
       assumptions: analysis.assumptions,
     });
     if (error) {
-      toast.error('Failed to save');
-    } else {
+  console.error('Save error:', error);
+  toast.error(`Failed to save: ${error.message || error}`);
+} else {
       setIsSaved(true);
       toast.success('Saved to history!');
     }
