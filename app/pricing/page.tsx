@@ -82,7 +82,7 @@ export default function PricingPage() {
       if (error) {
         toast.error('Please sign in first');
       } else if (url) {
-        window.location.href = url;
+        window.location.assign(url);
       }
     } catch {
       toast.error('Something went wrong');

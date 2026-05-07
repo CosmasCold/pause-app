@@ -1,7 +1,7 @@
 // app/settings/page.tsx
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, Suspense } from 'react';
 import { motion } from 'framer-motion';
 import {
   Bell,
@@ -10,17 +10,20 @@ import {
   LogOut,
   Trash2,
   ChevronRight,
+  CheckCircle,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import toast from 'react-hot-toast';
+import { useSearchParams } from 'next/navigation';
 
-export default function SettingsPage() {
+function SettingsContent() {
   const [profile, setProfile] = useState<{ email: string; tier: string; email_reports: boolean } | null>(null);
   const [loading, setLoading] = useState(true);
   const [emailReports, setEmailReports] = useState(true);
   const [savingReports, setSavingReports] = useState(false);
 
   const initialized = useRef(false);
+  const searchParams = useSearchParams();
 
   const fetchProfile = async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -44,6 +47,31 @@ export default function SettingsPage() {
     }
   }, []);
 
+  // Handle Stripe checkout session redirect
+  useEffect(() => {
+    const sessionId = searchParams.get('session_id');
+    if (!sessionId || !profile) return;
+
+    const confirmPayment = async () => {
+      try {
+        const response = await fetch('/api/confirm-payment', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sessionId }),
+        });
+        const result = await response.json();
+        if (result.tier) {
+          setProfile((prev) => prev ? { ...prev, tier: result.tier } : prev);
+          toast.success(`Upgraded to ${result.tier}!`);
+        }
+      } catch {
+        toast.error('Could not confirm payment');
+      }
+    };
+
+    confirmPayment();
+  }, [searchParams, profile]);
+
   const handleToggleReports = async () => {
     const newValue = !emailReports;
     setEmailReports(newValue);
@@ -58,7 +86,7 @@ export default function SettingsPage() {
 
     if (error) {
       toast.error('Failed to update preference');
-      setEmailReports(!newValue); // revert
+      setEmailReports(!newValue);
     } else {
       toast.success(newValue ? 'Weekly reports enabled' : 'Weekly reports disabled');
     }
@@ -118,13 +146,18 @@ export default function SettingsPage() {
               <p className="font-medium text-stone-700">Plan</p>
               <p className="text-stone-500 text-sm capitalize">{profile?.tier || 'free'}</p>
             </div>
-            {profile?.tier === 'free' && (
+            {profile?.tier === 'free' ? (
               <a
                 href="/pricing"
                 className="flex items-center gap-1 text-teal-600 hover:text-teal-700 font-medium text-sm"
               >
                 Upgrade <ChevronRight className="w-4 h-4" />
               </a>
+            ) : (
+              <div className="flex items-center gap-2 text-teal-600 font-medium text-sm">
+                <CheckCircle className="w-4 h-4" />
+                Active
+              </div>
             )}
           </div>
         </div>
@@ -205,5 +238,17 @@ export default function SettingsPage() {
         </div>
       </motion.div>
     </main>
+  );
+}
+
+export default function SettingsPage() {
+  return (
+    <Suspense fallback={
+      <main className="max-w-2xl mx-auto px-4 py-12">
+        <p className="text-stone-600 text-center">Loading settings...</p>
+      </main>
+    }>
+      <SettingsContent />
+    </Suspense>
   );
 }
