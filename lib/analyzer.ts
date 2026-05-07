@@ -28,7 +28,7 @@ const BIAS_PATTERNS: Record<string, { keywords: string[]; weight: number; explan
     explanation: 'Assuming feelings reflect reality'
   },
   'Labeling': {
-    keywords: ['idiot', 'stupid', 'useless', 'worthless', 'incompetent', 'moron', 'jerk'],
+    keywords: ['idiot', 'stupid', 'useless', 'worthless', 'incompetent', 'moron', 'jerk', 'hate'],
     weight: 0.9,
     explanation: 'Attaching a negative label to someone rather than describing the behavior'
   },
@@ -130,14 +130,11 @@ function detectAssumptions(text: string): Assumption[] {
 }
 
 function analyzeEmotionalTone(text: string, _biases: Bias[]): EmotionalTone {
-  
   const paragraphs = text.split(/\n\n|\n/).filter(p => p.trim().length > 0);
 
-  // Strong negative words
   const intenseNegative = ['hate', 'despise', 'furious', 'outraged', 'disgusting', 'vile', 'evil'];
   const moderateNegative = ['angry', 'upset', 'frustrated', 'annoyed', 'disappointed', 'wrong'];
   const mildNegative = ['concerned', 'worried', 'uneasy', 'bothered', 'uncomfortable'];
-  
   const positive = ['thank', 'appreciate', 'grateful', 'happy', 'pleased', 'glad', 'great', 'good', 'love', 'wonderful'];
   const professional = ['regarding', 'following up', 'per our', 'would like to', 'consider', 'perhaps'];
 
@@ -156,7 +153,6 @@ function analyzeEmotionalTone(text: string, _biases: Bias[]): EmotionalTone {
     endTone = getToneForText(paragraphs[paragraphs.length - 1], intenseNegative, moderateNegative, mildNegative, positive, professional);
   }
 
-  // Detect shift
   let shift = 'stable';
   const negativeTones = ['angry', 'frustrated', 'hostile', 'sad', 'negative'];
   const positiveTones = ['appreciative', 'grateful', 'happy', 'warm', 'positive'];
@@ -167,7 +163,6 @@ function analyzeEmotionalTone(text: string, _biases: Bias[]): EmotionalTone {
     shift = 'positive-to-negative';
   }
 
-  // Intensity
   const allTones = [startTone, middleTone, endTone];
   const intensity: 'mild' | 'moderate' | 'intense' = 
     allTones.some(t => ['angry', 'hostile', 'furious'].includes(t)) ? 'intense' :
@@ -204,31 +199,24 @@ function calculateRegretScore(
 ): number {
   let score = 0;
 
-  // Biases contribute heavily
   score += biases.length * 15;
 
-  // High confidence biases contribute more
   biases.forEach(b => {
     if (b.confidence > 0.8) score += 10;
   });
 
-  // Assumptions add score
   assumptions.forEach(a => {
     if (a.severity === 'high') score += 15;
     else score += 8;
   });
 
-  // Emotional intensity
   if (tone.intensity === 'intense') score += 25;
   else if (tone.intensity === 'moderate') score += 12;
 
-  // Negative tone shift
   if (tone.shift === 'positive-to-negative') score += 15;
 
-  // Angry tone anywhere
   if (tone.start === 'angry' || tone.middle === 'angry' || tone.end === 'angry') score += 20;
 
-  // Context multiplier
   const multipliers: Record<WritingContext, number> = {
     email: 1.2,
     social: 1.5,
@@ -244,34 +232,67 @@ function calculateRegretScore(
 
 function generateRephrases(text: string, biases: Bias[]): string[] {
   const rephrases: string[] = [];
-  
 
-  biases.forEach(bias => {
-    if (bias.type === 'All-or-Nothing') {
-      const softened = bias.excerpt
-        .replace(/\balways\b/gi, 'sometimes')
-        .replace(/\bnever\b/gi, 'occasionally')
-        .replace(/\beveryone\b/gi, 'some people')
-        .replace(/\beverything\b/gi, 'some things')
-        .replace(/\bnothing\b/gi, 'very little')
-        .replace(/\bconstantly\b/gi, 'frequently');
-      if (softened !== bias.excerpt) rephrases.push(softened);
-    }
-    if (bias.type === 'Mind Reading') {
-      const reframed = bias.excerpt
-        .replace(/you think/gi, 'I wonder if')
-        .replace(/you feel/gi, 'you might feel')
-        .replace(/you believe/gi, 'your perspective seems to be')
-        .replace(/you just/gi, 'you may');
-      if (reframed !== bias.excerpt) rephrases.push(reframed);
-    }
-    if (bias.type === 'Labeling') {
-      const cleaned = bias.excerpt
-        .replace(/\b(?:idiot|stupid|useless|worthless|incompetent|moron|jerk)\b/gi, '[consider rephrasing]');
-      if (cleaned !== bias.excerpt) rephrases.push(cleaned);
-    }
-  });
+  if (biases.some(b => b.type === 'Labeling')) {
+    rephrases.push(
+      'Describe how the specific behavior affected you rather than attacking the person. ' +
+      'Try: "I felt hurt when..." instead of name-calling or labels.'
+    );
+  }
 
-  // Deduplicate
-  return [...new Set(rephrases)].slice(0, 3);
+  if (biases.some(b => b.type === 'Blaming')) {
+    rephrases.push(
+      'Instead of assigning blame, focus on the impact and what you need going forward. ' +
+      'Try: "When X happened, I felt Y. In the future, I would appreciate Z."'
+    );
+  }
+
+  if (biases.some(b => b.type === 'All-or-Nothing')) {
+    rephrases.push(
+      'Soften absolute language. Replace words like "always," "never," and "completely" ' +
+      'with "sometimes," "often," or "in this instance" to keep the conversation productive.'
+    );
+  }
+
+  if (biases.some(b => b.type === 'Mind Reading')) {
+    rephrases.push(
+      'Instead of assuming what the other person thinks or feels, try asking: ' +
+      '"Can you help me understand your perspective on this?"'
+    );
+  }
+
+  if (biases.some(b => b.type === 'Catastrophizing')) {
+    rephrases.push(
+      'Pause and ask yourself: "What is the most likely outcome, not the worst possible one?" ' +
+      'Describe the situation factually without dramatic language.'
+    );
+  }
+
+  if (biases.some(b => b.type === 'Emotional Reasoning')) {
+    rephrases.push(
+      'Feelings are valid, but they are not facts. Consider adding: ' +
+      '"I recognize this is how I feel right now, and I want to also look at the facts."'
+    );
+  }
+
+  if (biases.some(b => b.type === 'Personalization')) {
+    rephrases.push(
+      'Be careful not to take excessive responsibility. Ask yourself: ' +
+      '"What part of this situation is actually within my control?"'
+    );
+  }
+
+  if (rephrases.length === 0 && biases.length > 0) {
+    rephrases.push(
+      'This message might benefit from a calmer tone. Consider waiting a few hours and revisiting it.'
+    );
+  }
+
+  if (rephrases.length === 0) {
+    rephrases.push(
+      'Your message looks clear. To add warmth, consider including something you appreciate about the recipient.'
+    );
+  }
+
+  return rephrases.slice(0, 3);
 }
