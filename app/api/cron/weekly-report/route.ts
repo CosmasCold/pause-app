@@ -48,7 +48,7 @@ export async function GET() {
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-              from: 'Pause <reports@pauseapp.com>',
+              from: 'Pause <onboarding@resend.dev>',
               to: user.email,
               subject: `Your Weekly Pause Report – ${report.averageRegretScore}% regret probability`,
               html: buildEmailHtml(user.email.split('@')[0], report),
