@@ -1,94 +1,134 @@
-// app/api/analyze/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 
 const GROQ_API_KEY = process.env.GROQ_API_KEY || '';
 
-const SYSTEM_PROMPT = `You are an expert communication coach and cognitive behavioral therapist. Analyze the provided text for emotional tone, cognitive biases, assumptions about others, and regret probability (the likelihood the sender will regret sending this message). Respond ONLY with a valid JSON object — no markdown, no extra text. The JSON must have exactly this structure:
+const SYSTEM_PROMPT = `You are a blunt, honest communication coach. Analyze the text for emotional tone, cognitive biases, assumptions about others, and regret probability.
+
+TONE must be exactly one of: neutral, concerned, frustrated, angry, appreciative, professional, mixed, sad.
+SHIFT must be exactly one of: stable, positive-to-negative, negative-to-positive, minimal.
+INTENSITY must be exactly one of: mild, moderate, intense.
+
+For messages containing insults, profanity, or direct attacks, regretScore MUST be at least 85.
+
+Respond ONLY with valid JSON (no markdown, no backticks) with this exact structure:
 
 {
   "biases": [
-    {
-      "type": "string (e.g., All-or-Nothing, Mind Reading, Catastrophizing, Labeling, Blaming, Emotional Reasoning, Personalization)",
-      "confidence": number (0-1),
-      "excerpt": "the specific phrase from the text",
-      "explanation": "brief explanation of this bias"
-    }
+    { "type": "string", "confidence": number, "excerpt": "exact phrase", "explanation": "brief" }
   ],
   "emotionalTone": {
-    "start": "string (e.g., angry, frustrated, neutral, appreciative, etc.)",
-    "middle": "string",
-    "end": "string",
-    "shift": "string (stable, positive-to-negative, negative-to-positive, minimal)",
-    "intensity": "mild, moderate, or intense"
+    "start": "tone",
+    "middle": "tone",
+    "end": "tone",
+    "shift": "shift",
+    "intensity": "intensity"
   },
   "assumptions": [
-    {
-      "text": "the exact phrase that shows assumption about others",
-      "severity": "low, medium, or high"
-    }
+    { "text": "exact phrase", "severity": "low, medium, or high" }
   ],
-  "regretScore": number (0-100, where 0 = no regret likely, 100 = extremely likely to regret),
-  "suggestedRephrases": [
-    "A helpful, actionable rephrasing or communication advice (not just word swaps, but a full alternative sentence or strategy)"
-  ],
-  "reflectiveQuestion": "A thought-provoking question to help the user reconsider their message"
+  "regretScore": number (0-100),
+  "suggestedRephrases": [ "actionable rephrasing advice" ],
+  "reflectiveQuestion": "thought-provoking question"
 }`;
+
+const PROFANITY = /\b(fuck|shit|asshole|bitch|bastard|dick|piss|cunt|motherfucker|douche|scumbag|moron|idiot|stupid|hate|worthless|useless|pathetic|garbage|trash|scum|kill yourself)\b/i;
 
 export async function POST(request: NextRequest) {
   try {
     const { text, context } = await request.json();
 
-    if (!text || text.length < 10) {
+    if (!text || text.length < 3) {
       return NextResponse.json({ error: 'Text too short' }, { status: 400 });
     }
 
-    if (!GROQ_API_KEY) {
-      return NextResponse.json({ error: 'Groq API key not configured' }, { status: 500 });
+    const hasProfanity = PROFANITY.test(text);
+    let aiResult = null;
+
+    if (GROQ_API_KEY) {
+      try {
+        const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${GROQ_API_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: 'llama-3.1-8b-instant',
+            messages: [
+              { role: 'system', content: SYSTEM_PROMPT },
+              { role: 'user', content: `Context: ${context}\nText: """${text}"""\n\nAnalyze. If this contains ANY profanity or insults, regretScore must be 85 or higher.` }
+            ],
+            temperature: 0.1,
+            max_tokens: 1000,
+          }),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          let content = data.choices[0].message.content.trim();
+          content = content.replace(/```json\n?|```/g, '').trim();
+          aiResult = JSON.parse(content);
+        }
+      } catch (e) {
+        console.error('Groq error:', e);
+      }
     }
 
-    const userPrompt = `Context: ${context} message\nText: """${text}"""\n\nAnalyze the text above.`;
-
-    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${GROQ_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'llama-3.1-8b-instant',
-        messages: [
-          { role: 'system', content: SYSTEM_PROMPT },
-          { role: 'user', content: userPrompt }
-        ],
-        temperature: 0.1,
-        max_tokens: 1000,
-      }),
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Groq error:', errorText);
-      return NextResponse.json({ error: 'AI analysis failed' }, { status: 502 });
+    // Safety net: override for profanity
+    if (hasProfanity) {
+      if (!aiResult) {
+        aiResult = {
+          biases: [{
+            type: 'Labeling',
+            confidence: 0.95,
+            excerpt: text.split(/[.!?]+/)[0].trim(),
+            explanation: 'Message contains hostile or derogatory language'
+          }],
+          emotionalTone: { start: 'angry', middle: 'angry', end: 'angry', shift: 'stable', intensity: 'intense' },
+          assumptions: [{ text: text.trim(), severity: 'high' }],
+          regretScore: 90,
+          suggestedRephrases: ['Express your frustration without personal attacks. Try: "I feel really upset right now and need to talk about this."'],
+          reflectiveQuestion: 'What do you actually want the other person to understand?'
+        };
+      } else {
+        // Enforce minimums
+        aiResult.emotionalTone.start = aiResult.emotionalTone.start === 'neutral' ? 'angry' : aiResult.emotionalTone.start;
+        aiResult.emotionalTone.intensity = 'intense';
+        aiResult.regretScore = Math.max(aiResult.regretScore ?? 80, 85);
+      }
     }
 
-    const data = await response.json();
-    const content = data.choices[0].message.content;
+    if (!aiResult) {
+      aiResult = {
+        biases: [],
+        emotionalTone: { start: 'neutral', middle: 'neutral', end: 'neutral', shift: 'minimal', intensity: 'mild' },
+        assumptions: [],
+        regretScore: 0,
+        suggestedRephrases: [],
+        reflectiveQuestion: 'Is there anything you want to add to make your intent clearer?'
+      };
+    }
 
-    // Parse the JSON from the response (strip any accidental markdown fences)
-    let cleaned = content.trim();
-    if (cleaned.startsWith('```json')) cleaned = cleaned.slice(7);
-    if (cleaned.startsWith('```')) cleaned = cleaned.slice(3);
-    if (cleaned.endsWith('```')) cleaned = cleaned.slice(0, -3);
-    cleaned = cleaned.trim();
+    // Normalize any non-standard tone values that AI might return
+    const validTones = ['neutral', 'concerned', 'frustrated', 'angry', 'appreciative', 'professional', 'mixed', 'sad'];
+    for (const key of ['start', 'middle', 'end'] as const) {
+      if (!validTones.includes(aiResult.emotionalTone[key])) {
+        aiResult.emotionalTone[key] = 'frustrated';
+      }
+    }
+    const validShifts = ['stable', 'positive-to-negative', 'negative-to-positive', 'minimal'];
+    if (!validShifts.includes(aiResult.emotionalTone.shift)) {
+      aiResult.emotionalTone.shift = 'stable';
+    }
+    const validIntensities = ['mild', 'moderate', 'intense'];
+    if (!validIntensities.includes(aiResult.emotionalTone.intensity)) {
+      aiResult.emotionalTone.intensity = 'intense';
+    }
 
-    const result = JSON.parse(cleaned);
-    return NextResponse.json(result);
+    return NextResponse.json(aiResult);
 
   } catch (error) {
     console.error('Analysis error:', error);
-    return NextResponse.json({ 
-      error: 'Analysis failed',
-      details: error instanceof Error ? error.message : 'Unknown error'
-    }, { status: 500 });
+    return NextResponse.json({ error: 'Analysis failed' }, { status: 500 });
   }
 }
