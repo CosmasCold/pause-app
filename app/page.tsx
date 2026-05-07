@@ -64,10 +64,10 @@ export default function Home() {
         animate={{ opacity: 1, y: 0 }}
         className="text-center mb-16"
       >
-        <h1 className="font-playfair text-6xl font-bold text-stone-700 mb-6">
+        <h1 className="font-playfair text-6xl font-bold text-stone-800 mb-6">
           Pause before you send.
         </h1>
-        <p className="text-xl text-stone-500 max-w-2xl mx-auto leading-relaxed">
+        <p className="text-xl text-stone-600 max-w-2xl mx-auto leading-relaxed">
           The space between feeling and sending. Check your writing for
           emotional tone, cognitive biases, and hidden assumptions.
         </p>
@@ -83,7 +83,7 @@ export default function Home() {
               className={`px-5 py-2.5 rounded-full text-sm font-medium transition-all duration-200 ${
                 context === ctx
                   ? 'bg-teal-500 text-white shadow-lg shadow-teal-200/50'
-                  : 'bg-white/80 text-stone-500 hover:bg-white border border-stone-200/60'
+                  : 'bg-white/80 text-stone-600 hover:bg-white border border-stone-300/60'
               }`}
             >
               {ctx.charAt(0).toUpperCase() + ctx.slice(1)}
@@ -95,20 +95,20 @@ export default function Home() {
       {/* Main Input Area */}
       <motion.div
         layout
-        className="bg-white/90 rounded-3xl shadow-xl shadow-stone-200/40 border border-stone-200/50 p-8 mb-8 backdrop-blur-sm"
+        className="bg-white/90 rounded-3xl shadow-xl shadow-stone-300/40 border border-stone-300/50 p-8 mb-8"
       >
         <textarea
           value={text}
           onChange={(e) => setText(e.target.value)}
           placeholder={getPlaceholder(context)}
           disabled={isAnalyzing}
-          className={`w-full h-48 text-lg text-stone-600 placeholder-stone-400 resize-none focus:outline-none leading-relaxed bg-transparent ${
+          className={`w-full h-48 text-lg text-stone-700 placeholder-stone-400 resize-none focus:outline-none leading-relaxed bg-transparent ${
             isAnalyzing ? 'opacity-60 cursor-not-allowed' : ''
           }`}
         />
 
-        <div className="flex justify-between items-center mt-6 pt-6 border-t border-stone-200/50">
-          <div className="text-sm text-stone-400">
+        <div className="flex justify-between items-center mt-6 pt-6 border-t border-stone-300/50">
+          <div className="text-sm text-stone-500">
             {isAnalyzing ? 'Analyzing your text…' : `${text.length} characters`}
           </div>
 
@@ -155,10 +155,10 @@ export default function Home() {
             <motion.div
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              className="bg-white/90 rounded-3xl p-8 shadow-xl shadow-stone-200/40 border border-stone-200/50 backdrop-blur-sm"
+              className="bg-white/90 rounded-3xl p-8 shadow-xl shadow-stone-300/40 border border-stone-300/50"
             >
               <div className="flex items-center justify-between mb-6">
-                <h3 className="text-2xl font-playfair font-bold text-stone-700">
+                <h3 className="text-2xl font-playfair font-bold text-stone-800">
                   Regret Probability
                 </h3>
                 <div
@@ -169,7 +169,7 @@ export default function Home() {
                 </div>
               </div>
 
-              <div className="w-full bg-stone-200/50 rounded-full h-3">
+              <div className="w-full bg-stone-300/50 rounded-full h-3">
                 <motion.div
                   initial={{ width: 0 }}
                   animate={{ width: `${analysis.regretScore}%` }}
@@ -181,13 +181,13 @@ export default function Home() {
                 />
               </div>
 
-              <p className="mt-4 text-stone-500">
+              <p className="mt-4 text-stone-600">
                 {getScoreMessage(analysis.regretScore)}
               </p>
 
               <button
                 onClick={() => setShowShare(true)}
-                className="mt-4 flex items-center gap-2 text-teal-600 hover:text-teal-700 transition-colors"
+                className="mt-4 flex items-center gap-2 text-teal-600 hover:text-teal-700 transition-colors font-medium"
               >
                 <Share2 className="w-4 h-4" />
                 Share your Pause
@@ -214,7 +214,7 @@ export default function Home() {
                 />
               </div>
               {analysis.emotionalTone.shift !== 'stable' && (
-                <div className="mt-4 p-4 bg-amber-50/80 rounded-2xl text-amber-700">
+                <div className="mt-4 p-4 bg-amber-50/80 rounded-2xl text-amber-800 font-medium">
                   Tone shift detected:{' '}
                   {analysis.emotionalTone.shift.replace(/-/g, ' → ')}
                 </div>
@@ -227,25 +227,25 @@ export default function Home() {
               title="Cognitive Biases Detected"
             >
               {analysis.biases.length === 0 ? (
-                <p className="text-stone-500">
+                <p className="text-stone-600">
                   No significant cognitive biases detected. Great job!
                 </p>
               ) : (
                 <div className="space-y-4">
                   {analysis.biases.map((bias, i) => (
-                    <div key={i} className="p-4 bg-stone-50/80 rounded-2xl">
+                    <div key={i} className="p-4 bg-stone-100/80 rounded-2xl">
                       <div className="flex items-start justify-between mb-2">
-                        <h4 className="font-semibold text-stone-700">
+                        <h4 className="font-semibold text-stone-800">
                           {bias.type}
                         </h4>
-                        <span className="text-sm text-stone-400">
+                        <span className="text-sm text-stone-500">
                           {Math.round(bias.confidence * 100)}% confidence
                         </span>
                       </div>
-                      <p className="text-sm text-stone-500 mb-2">
+                      <p className="text-sm text-stone-600 mb-2">
                         &ldquo;{bias.excerpt}&rdquo;
                       </p>
-                      <p className="text-xs text-stone-400">
+                      <p className="text-xs text-stone-500">
                         {bias.explanation}
                       </p>
                     </div>
@@ -260,7 +260,7 @@ export default function Home() {
               title="Assumptions About Others"
             >
               {analysis.assumptions.length === 0 ? (
-                <p className="text-stone-500">
+                <p className="text-stone-600">
                   No assumptions detected in your writing.
                 </p>
               ) : (
@@ -270,8 +270,8 @@ export default function Home() {
                       key={i}
                       className="flex items-center gap-3 p-3 bg-purple-50/80 rounded-xl"
                     >
-                      <div className="w-2 h-2 rounded-full bg-purple-400" />
-                      <p className="text-sm text-purple-800">
+                      <div className="w-2 h-2 rounded-full bg-purple-500" />
+                      <p className="text-sm text-purple-900 font-medium">
                         &ldquo;{assumption.text}&rdquo;
                       </p>
                     </div>
@@ -293,10 +293,10 @@ export default function Home() {
                       onClick={() => handleRephraseApply(rephrase)}
                       className="w-full text-left p-4 bg-teal-50/80 rounded-2xl hover:bg-teal-100/80 transition-colors group"
                     >
-                      <p className="text-teal-800 mb-1">
+                      <p className="text-teal-800 font-medium mb-1">
                         Rewrite {i + 1}:
                       </p>
-                      <p className="text-stone-600">
+                      <p className="text-stone-700">
                         &ldquo;{rephrase}&rdquo;
                       </p>
                       <p className="text-xs text-teal-600 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -312,15 +312,15 @@ export default function Home() {
             <motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
-              className="bg-gradient-to-r from-teal-50/80 to-emerald-50/80 rounded-3xl p-8 border border-teal-100/50 backdrop-blur-sm"
+              className="bg-gradient-to-r from-teal-50/80 to-emerald-50/80 rounded-3xl p-8 border border-teal-200/50"
             >
               <div className="flex items-start gap-4">
                 <div className="text-3xl">💭</div>
                 <div>
-                  <p className="text-sm text-teal-600 mb-2 font-medium">
+                  <p className="text-sm text-teal-700 mb-2 font-medium">
                     A moment of reflection
                   </p>
-                  <p className="text-xl font-playfair text-teal-800 italic">
+                  <p className="text-xl font-playfair text-teal-900 italic">
                     &ldquo;{analysis.reflectiveQuestion}&rdquo;
                   </p>
                 </div>
@@ -385,11 +385,11 @@ function ResultsCard({
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-white/90 rounded-3xl p-8 shadow-xl shadow-stone-200/40 border border-stone-200/50 backdrop-blur-sm"
+      className="bg-white/90 rounded-3xl p-8 shadow-xl shadow-stone-300/40 border border-stone-300/50"
     >
       <div className="flex items-center gap-3 mb-6">
-        <div className="text-teal-500">{icon}</div>
-        <h3 className="text-xl font-playfair font-bold text-stone-700">
+        <div className="text-teal-600">{icon}</div>
+        <h3 className="text-xl font-playfair font-bold text-stone-800">
           {title}
         </h3>
       </div>
@@ -400,11 +400,11 @@ function ResultsCard({
 
 function ToneIndicator({ label, tone }: { label: string; tone: string }) {
   return (
-    <div className="text-center p-4 bg-stone-50/80 rounded-2xl">
-      <p className="text-xs text-stone-400 mb-2 uppercase tracking-wide">
+    <div className="text-center p-4 bg-stone-100/80 rounded-2xl">
+      <p className="text-xs text-stone-500 mb-2 uppercase tracking-wide">
         {label}
       </p>
-      <p className="font-semibold text-stone-600 capitalize">{tone}</p>
+      <p className="font-semibold text-stone-700 capitalize">{tone}</p>
     </div>
   );
 }
@@ -419,10 +419,10 @@ function FeatureCard({
   description: string;
 }) {
   return (
-    <div className="p-8 bg-white/80 rounded-3xl border border-stone-200/50 hover:shadow-lg hover:shadow-stone-200/30 transition-shadow backdrop-blur-sm">
-      <div className="text-teal-500 mb-4">{icon}</div>
-      <h3 className="font-semibold text-stone-600 mb-2">{title}</h3>
-      <p className="text-stone-400 text-sm leading-relaxed">{description}</p>
+    <div className="p-8 bg-white/80 rounded-3xl border border-stone-300/50 hover:shadow-lg hover:shadow-stone-300/30 transition-shadow">
+      <div className="text-teal-600 mb-4">{icon}</div>
+      <h3 className="font-semibold text-stone-700 mb-2">{title}</h3>
+      <p className="text-stone-500 text-sm leading-relaxed">{description}</p>
     </div>
   );
 }

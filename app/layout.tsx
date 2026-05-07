@@ -28,10 +28,10 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.variable} ${playfair.variable}`}>
       <body
-        className="min-h-screen text-stone-600"
+        className="min-h-screen text-stone-700"
         style={{
           background:
-            'linear-gradient(160deg, #fdf9f0 0%, #f9f0e2 20%, #eef5f2 50%, #e4f0ea 75%, #d8ede4 100%)',
+            'linear-gradient(160deg, #f2ebd9 0%, #ebe1cc 20%, #dce8e2 50%, #d2e2d9 75%, #c5dbcf 100%)',
         }}
       >
         <Navigation />

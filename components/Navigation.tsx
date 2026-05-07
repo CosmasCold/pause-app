@@ -33,17 +33,17 @@ export default function Navigation() {
 
   return (
     <>
-      <nav className="fixed top-0 left-0 right-0 z-40 bg-white/80 backdrop-blur-lg border-b border-stone-100">
+      <nav className="fixed top-0 left-0 right-0 z-40 bg-white/85 backdrop-blur-lg border-b border-stone-200/60">
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
-  <span className="text-teal-500">
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="6" y="4" width="4" height="16" rx="2" />
-      <rect x="14" y="4" width="4" height="16" rx="2" />
-    </svg>
-  </span>
-  <span className="font-playfair text-xl font-bold text-stone-700">Pause</span>
-</Link>
+            <span className="text-teal-600">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                <rect x="6" y="4" width="4" height="16" rx="2" />
+                <rect x="14" y="4" width="4" height="16" rx="2" />
+              </svg>
+            </span>
+            <span className="font-playfair text-xl font-bold text-stone-800">Pause</span>
+          </Link>
 
           <div className="flex items-center gap-4">
             {user ? (
@@ -72,7 +72,7 @@ export default function Navigation() {
                       onClick={() => setShowUserMenu(false)}
                     >
                       <History className="w-4 h-4 text-stone-400" />
-                      <span>History</span>
+                      <span className="text-stone-700">History</span>
                     </Link>
 
                     <Link
@@ -81,7 +81,7 @@ export default function Navigation() {
                       onClick={() => setShowUserMenu(false)}
                     >
                       <Settings className="w-4 h-4 text-stone-400" />
-                      <span>Settings</span>
+                      <span className="text-stone-700">Settings</span>
                     </Link>
 
                     <hr className="my-2 border-stone-100" />
@@ -99,7 +99,7 @@ export default function Navigation() {
             ) : (
               <button
                 onClick={() => setShowAuth(true)}
-                className="bg-stone-900 text-white px-5 py-2.5 rounded-2xl font-medium hover:bg-stone-800 transition-colors"
+                className="bg-teal-500 text-white px-5 py-2.5 rounded-2xl font-medium hover:bg-teal-600 transition-colors shadow-lg shadow-teal-200/30"
               >
                 Sign In
               </button>
