@@ -257,14 +257,11 @@ export default function Home() {
           className="text-center max-w-2xl"
         >
  <div className="mb-8 flex justify-center">
-            <Image
-              src="/logo.png"
-              alt="Pause"
-              width={80}
-              height={80}
-              className="object-contain"
-              unoptimized
-            />
+            <img
+  src="/logo.png"
+  alt="Pause"
+  className="h-16 w-auto object-contain mx-auto"
+/>
           </div>
 
           <h1 className="font-playfair text-5xl md:text-7xl font-bold text-stone-800 mb-6">

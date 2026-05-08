@@ -150,11 +150,11 @@ export default function ShareCard({
             {/* Logo */}
   <div className="text-center mb-4">
     <img
-      src={`${window.location.origin}/logo.png`}
-      alt="Pause"
-      style={{ height: '40px', display: 'inline-block' }}
-      crossOrigin="anonymous"
-    />
+  src="/logo.png"
+  alt="Pause"
+  style={{ height: '40px', display: 'inline-block' }}
+  crossOrigin="anonymous"
+/>
   </div>
             <div className="text-center mb-6">
               <div className="text-5xl mb-4">{scoreEmoji}</div>

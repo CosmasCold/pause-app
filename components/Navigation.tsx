@@ -64,14 +64,14 @@ export default function Navigation() {
 
   return (
     <>
-      <nav className="fixed top-0 left-0 right-0 z-40 bg-white/85 backdrop-blur-lg border-b border-stone-200/60">
-        <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+      <nav className="h-16 fixed top-0 left-0 right-0 z-40 bg-white/85 backdrop-blur-lg border-b border-stone-200/60">
+        <div className="max-w-6xl mx-auto px-4 h-full flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
             <Image
               src="/logo.png"
               alt="Pause"
-              width={32}
-              height={32}
+              width={28}
+              height={28}
               className="object-contain"
               unoptimized
             />
