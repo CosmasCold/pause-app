@@ -231,16 +231,17 @@ function SettingsContent() {
         <div className="flex items-center gap-4 mb-6">
           <div className="relative">
             {avatarPreview ? (
-              <img
-                src={avatarPreview}
-                alt="Avatar"
-                className="w-16 h-16 rounded-full object-cover border-2 border-stone-200"
-              />
-            ) : (
-              <div className="w-16 h-16 rounded-full bg-teal-100 flex items-center justify-center">
-                <UserIcon className="w-8 h-8 text-teal-600" />
-              </div>
-            )}
+  // eslint-disable-next-line @next/next/no-img-element
+  <img
+    src={avatarPreview}
+    alt="Avatar"
+    className="w-16 h-16 rounded-full object-cover border-2 border-stone-200"
+  />
+) : (
+  <div className="w-16 h-16 rounded-full bg-teal-100 flex items-center justify-center">
+    <UserIcon className="w-8 h-8 text-teal-600" />
+  </div>
+)}
             <button
               onClick={() => fileInputRef.current?.click()}
               className="absolute -bottom-1 -right-1 bg-white rounded-full p-1 shadow border border-stone-200"
