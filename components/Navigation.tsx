@@ -67,12 +67,14 @@ export default function Navigation() {
       <nav className="fixed top-0 left-0 right-0 z-40 bg-white/85 backdrop-blur-lg border-b border-stone-200/60">
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
-            <span className="text-teal-600">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                <rect x="6" y="4" width="4" height="16" rx="2" />
-                <rect x="14" y="4" width="4" height="16" rx="2" />
-              </svg>
-            </span>
+            <Image
+              src="/logo.png"
+              alt="Pause"
+              width={32}
+              height={32}
+              className="object-contain"
+              unoptimized
+            />
             <span className="font-playfair text-xl font-bold text-stone-800">Pause</span>
           </Link>
 

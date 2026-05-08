@@ -147,6 +147,15 @@ export default function ShareCard({
             className="bg-gradient-to-br from-teal-50 to-emerald-50 rounded-2xl p-8 border border-teal-100"
             style={{ maxWidth: '360px', margin: '0 auto' }}
           >
+            {/* Logo */}
+  <div className="text-center mb-4">
+    <img
+      src={`${window.location.origin}/logo.png`}
+      alt="Pause"
+      style={{ height: '40px', display: 'inline-block' }}
+      crossOrigin="anonymous"
+    />
+  </div>
             <div className="text-center mb-6">
               <div className="text-5xl mb-4">{scoreEmoji}</div>
               <div

@@ -23,6 +23,7 @@ import { AnalysisResult, WritingContext } from '@/lib/types';
 import ShareCard from '@/components/ShareCard';
 import { supabase } from '@/lib/supabase';
 import AuthModal from '@/components/AuthModal';
+import Image from 'next/image';
 
 export default function Home() {
   const [text, setText] = useState('');
@@ -255,6 +256,17 @@ export default function Home() {
           animate={{ opacity: 1, y: 0 }}
           className="text-center max-w-2xl"
         >
+ <div className="mb-8 flex justify-center">
+            <Image
+              src="/logo.png"
+              alt="Pause"
+              width={80}
+              height={80}
+              className="object-contain"
+              unoptimized
+            />
+          </div>
+
           <h1 className="font-playfair text-5xl md:text-7xl font-bold text-stone-800 mb-6">
             Pause before you send.
           </h1>
