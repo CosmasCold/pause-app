@@ -17,14 +17,16 @@ const plans = [
     description: 'For occasional checking',
     features: [
       '3 analyses per day',
-      'Basic bias detection',
-      'Regret probability score',
       '1,000 character limit',
+      'Cognitive bias detection',
+      'Emotional tone analysis',
+      'Rephrasing suggestions',
+      'Reflective questions',
       'All writing contexts',
     ],
-    cta: 'Current Plan',
+    cta: 'Free Plan',
     popular: false,
-    priceId: null,
+    priceId: '',
   },
   {
     name: 'Pro',
@@ -33,11 +35,9 @@ const plans = [
     description: 'For professionals who communicate daily',
     features: [
       'Unlimited analyses',
-      'Advanced tone & bias detection',
       'Unlimited text length',
-      'Save analysis history',
-      'Rephrasing suggestions',
-      'Reflective questions',
+      'Save & review history',
+      'Everything in Free, unrestricted',
     ],
     cta: 'Start Pro Trial',
     popular: true,
@@ -54,7 +54,7 @@ const plans = [
       'Admin controls',
       'Priority support',
     ],
-    cta: 'Contact Sales',
+    cta: 'Start Team Trial',
     popular: false,
     priceId: 'team',
   },
@@ -65,9 +65,13 @@ export default function PricingPage() {
   const [loadingTier, setLoadingTier] = useState<string | null>(null);
 
   const handleSubscribe = async (tier: string) => {
+    if (!tier) return; // Free plan
+
     setLoadingTier(tier);
 
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     if (!user || !user.email) {
       toast.error('Please sign in first');
       setLoadingTier(null);
@@ -151,24 +155,34 @@ export default function PricingPage() {
                   ))}
                 </ul>
 
-                <button
-                  onClick={() => plan.priceId && handleSubscribe(plan.priceId)}
-                  disabled={loadingTier === plan.priceId || !plan.priceId}
-                  className={`w-full py-3.5 rounded-2xl font-medium transition-all ${
-                    plan.popular
-                      ? 'bg-stone-900 text-white hover:bg-stone-800'
-                      : 'bg-stone-100 text-stone-900 hover:bg-stone-200'
-                  } disabled:opacity-50`}
-                >
-                  {loadingTier === plan.priceId ? (
-                    'Loading...'
-                  ) : (
-                    <span className="flex items-center justify-center gap-2">
-                      {plan.cta}
-                      <ArrowRight className="w-4 h-4" />
-                    </span>
-                  )}
-                </button>
+                {/* Free plan button: disabled, no action */}
+                {!plan.priceId ? (
+                  <button
+                    disabled
+                    className="w-full py-3.5 rounded-2xl font-medium bg-stone-100 text-stone-500 cursor-not-allowed"
+                  >
+                    {plan.cta}
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => handleSubscribe(plan.priceId)}
+                    disabled={loadingTier === plan.priceId}
+                    className={`w-full py-3.5 rounded-2xl font-medium transition-all ${
+                      plan.popular
+                        ? 'bg-stone-900 text-white hover:bg-stone-800'
+                        : 'bg-stone-100 text-stone-900 hover:bg-stone-200'
+                    } disabled:opacity-50`}
+                  >
+                    {loadingTier === plan.priceId ? (
+                      'Loading...'
+                    ) : (
+                      <span className="flex items-center justify-center gap-2">
+                        {plan.cta}
+                        <ArrowRight className="w-4 h-4" />
+                      </span>
+                    )}
+                  </button>
+                )}
               </motion.div>
             ))}
           </div>
