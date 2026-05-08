@@ -2,7 +2,19 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { UserPlus, Trash2, Users } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { motion } from 'framer-motion';
+import {
+  UserPlus,
+  Trash2,
+  Users,
+  AlertCircle,
+  ArrowRight,
+  ArrowLeft,
+  BarChart3,
+  Settings,
+  Mail,
+} from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import toast from 'react-hot-toast';
 import Navigation from '@/components/Navigation';
@@ -14,6 +26,7 @@ interface Team {
   created_by: string;
   seats_total: number;
   seats_used: number;
+  created_at: string;
 }
 
 interface Member {
@@ -22,6 +35,7 @@ interface Member {
 }
 
 export default function TeamPage() {
+  const router = useRouter();
   const [team, setTeam] = useState<Team | null>(null);
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
@@ -29,8 +43,31 @@ export default function TeamPage() {
   const [memberEmail, setMemberEmail] = useState('');
   const [isCreating, setIsCreating] = useState(false);
   const [isAddingMember, setIsAddingMember] = useState(false);
+  const [userTier, setUserTier] = useState<string | null>(null);
 
   const fetchTeam = useCallback(async () => {
+    setLoading(true);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      setLoading(false);
+      return;
+    }
+
+    // Check user's tier first
+    const { data: profile } = await supabase
+      .from('user_profiles')
+      .select('tier, team_id')
+      .eq('id', user.id)
+      .single();
+
+    setUserTier(profile?.tier || 'free');
+
+    if (!profile || profile.tier !== 'team') {
+      setLoading(false);
+      return;
+    }
+
+    // Only fetch team data if on team tier
     const response = await fetch('/api/team/manage');
     const data = await response.json();
     if (data.team) {
@@ -41,13 +78,8 @@ export default function TeamPage() {
   }, []);
 
   useEffect(() => {
-  let ignore = false;
-  (async () => {
-    if (!ignore) await fetchTeam();
-  })();
-  return () => {
-    ignore = true;
-  };
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  fetchTeam();
 }, [fetchTeam]);
 
   const handleCreateTeam = async () => {
@@ -106,118 +138,254 @@ export default function TeamPage() {
     }
   };
 
+  // Loading state
   if (loading) {
     return (
       <>
         <Navigation />
         <div className="pt-24 text-center">
-          <p className="text-stone-600">Loading team...</p>
+          <div className="animate-spin w-8 h-8 border-4 border-teal-200 border-t-teal-500 rounded-full mx-auto mb-4" />
+          <p className="text-stone-500">Loading team...</p>
         </div>
       </>
     );
   }
 
-  if (!team) {
+  // Not on team tier – show upgrade prompt
+  if (userTier && userTier !== 'team') {
     return (
       <>
         <Navigation />
-        <main className="pt-24 pb-16 px-4 max-w-md mx-auto">
-          <h1 className="text-3xl font-playfair font-bold text-stone-800 mb-4">
-            Create Your Team
-          </h1>
-          <p className="text-stone-600 mb-6">
-            You&apos;re on the Team plan. Set up your team to start collaborating.
-          </p>
-          <input
-            type="text"
-            placeholder="Team Name"
-            value={teamName}
-            onChange={(e) => setTeamName(e.target.value)}
-            className="w-full px-4 py-3 border-2 border-stone-200 rounded-2xl mb-4 focus:outline-none focus:border-teal-500"
-          />
-          <button
-            onClick={handleCreateTeam}
-            disabled={isCreating}
-            className="w-full bg-teal-500 text-white py-3 rounded-2xl font-medium hover:bg-teal-600 disabled:opacity-50"
+        <main className="pt-24 pb-16 px-4 max-w-2xl mx-auto text-center">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
           >
-            {isCreating ? 'Creating...' : 'Create Team'}
-          </button>
+            <div className="w-20 h-20 bg-amber-50 rounded-full flex items-center justify-center mx-auto mb-6">
+              <AlertCircle className="w-10 h-10 text-amber-500" />
+            </div>
+            <h1 className="text-3xl font-playfair font-bold text-stone-800 mb-4">
+              Team Plan Required
+            </h1>
+            <p className="text-stone-600 mb-8 max-w-md mx-auto leading-relaxed">
+              The Team feature is exclusively for team subscribers.
+              Upgrade your plan to unlock team management, member analytics,
+              and collaborative insights.
+            </p>
+            <div className="flex gap-4 justify-center">
+              <button
+                onClick={() => router.back()}
+                className="flex items-center gap-2 px-6 py-3 rounded-2xl border-2 border-stone-200 text-stone-600 hover:border-stone-300 transition-colors font-medium"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                Go Back
+              </button>
+              <Link
+                href="/pricing"
+                className="inline-flex items-center gap-2 bg-teal-500 text-white px-6 py-3 rounded-2xl font-medium hover:bg-teal-600 transition-colors"
+              >
+                View Plans
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
+          </motion.div>
         </main>
       </>
     );
   }
 
+  // On team tier but no team yet – show creation form
+  if (!team) {
+    return (
+      <>
+        <Navigation />
+        <main className="pt-24 pb-16 px-4 max-w-lg mx-auto">
+          <button
+            onClick={() => router.back()}
+            className="flex items-center gap-2 text-stone-500 hover:text-stone-700 mb-8 transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span className="text-sm font-medium">Back</span>
+          </button>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-white/90 rounded-3xl p-8 shadow-xl shadow-stone-300/40 border border-stone-300/50"
+          >
+            <div className="text-center mb-8">
+              <div className="w-16 h-16 bg-teal-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Users className="w-8 h-8 text-teal-600" />
+              </div>
+              <h1 className="text-2xl font-playfair font-bold text-stone-800 mb-2">
+                Create Your Team
+              </h1>
+              <p className="text-stone-600 text-sm">
+                You&apos;re on the Team plan. Set up your team to start collaborating.
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-stone-700 mb-2">
+                  Team Name
+                </label>
+                <input
+                  type="text"
+                  value={teamName}
+                  onChange={(e) => setTeamName(e.target.value)}
+                  placeholder="Enter team name"
+                  className="w-full px-4 py-3 border-2 border-stone-200 rounded-2xl focus:outline-none focus:border-teal-500 text-stone-700"
+                />
+              </div>
+              <button
+                onClick={handleCreateTeam}
+                disabled={isCreating || !teamName.trim()}
+                className="w-full bg-teal-500 text-white py-3 rounded-2xl font-medium hover:bg-teal-600 disabled:opacity-50 transition-colors"
+              >
+                {isCreating ? 'Creating...' : 'Create Team'}
+              </button>
+            </div>
+          </motion.div>
+        </main>
+      </>
+    );
+  }
+
+  // Full team management view
   return (
     <>
       <Navigation />
-      <main className="pt-24 pb-16 px-4 max-w-2xl mx-auto">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-3xl font-playfair font-bold text-stone-800">
-              {team.name}
-            </h1>
-            <p className="text-stone-500">
-              Members: {members.length} / {team.seats_total}
-            </p>
-          </div>
-          <Link
-            href="/dashboard"
-            className="bg-teal-500 text-white px-4 py-2 rounded-2xl font-medium hover:bg-teal-600 transition-colors"
-          >
-            Open Dashboard
-          </Link>
-        </div>
+      <main className="pt-24 pb-16 px-4 max-w-3xl mx-auto">
+        <button
+          onClick={() => router.back()}
+          className="flex items-center gap-2 text-stone-500 hover:text-stone-700 mb-8 transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span className="text-sm font-medium">Back</span>
+        </button>
 
-        {/* Add member form */}
-        <div className="bg-white/90 rounded-3xl p-6 mb-6 shadow-xl shadow-stone-300/40 border border-stone-300/50">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-white/90 rounded-3xl p-8 shadow-xl shadow-stone-300/40 border border-stone-300/50 mb-6"
+        >
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h1 className="text-3xl font-playfair font-bold text-stone-800">
+                {team.name}
+              </h1>
+              <div className="flex items-center gap-2 mt-2 text-stone-500 text-sm">
+                <Users className="w-4 h-4" />
+                <span>
+                  {members.length} / {team.seats_total} members
+                </span>
+                <span className="text-stone-300">•</span>
+                <span>Created {new Date(team.created_at).toLocaleDateString()}</span>
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <Link
+                href="/dashboard"
+                className="flex items-center gap-2 bg-teal-500 text-white px-4 py-2 rounded-2xl font-medium hover:bg-teal-600 transition-colors text-sm"
+              >
+                <BarChart3 className="w-4 h-4" />
+                Dashboard
+              </Link>
+              <Link
+                href="/settings"
+                className="flex items-center gap-2 bg-stone-100 text-stone-700 px-4 py-2 rounded-2xl font-medium hover:bg-stone-200 transition-colors text-sm"
+              >
+                <Settings className="w-4 h-4" />
+                Settings
+              </Link>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Add Member Card */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="bg-white/90 rounded-3xl p-6 shadow-xl shadow-stone-300/40 border border-stone-300/50 mb-6"
+        >
           <h2 className="text-lg font-semibold text-stone-800 mb-4 flex items-center gap-2">
             <UserPlus className="w-5 h-5 text-teal-600" />
             Add Member
           </h2>
           <div className="flex gap-3">
-            <input
-              type="email"
-              placeholder="Email address"
-              value={memberEmail}
-              onChange={(e) => setMemberEmail(e.target.value)}
-              className="flex-1 px-4 py-2.5 border-2 border-stone-200 rounded-2xl focus:outline-none focus:border-teal-500"
-            />
+            <div className="flex-1 relative">
+              <Mail className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-stone-400" />
+              <input
+                type="email"
+                placeholder="colleague@example.com"
+                value={memberEmail}
+                onChange={(e) => setMemberEmail(e.target.value)}
+                className="w-full pl-10 pr-4 py-3 border-2 border-stone-200 rounded-2xl focus:outline-none focus:border-teal-500 text-stone-700"
+              />
+            </div>
             <button
               onClick={handleAddMember}
-              disabled={isAddingMember}
-              className="bg-teal-500 text-white px-5 py-2.5 rounded-2xl font-medium hover:bg-teal-600 disabled:opacity-50 transition-colors"
+              disabled={isAddingMember || !memberEmail.trim()}
+              className="bg-teal-500 text-white px-6 py-3 rounded-2xl font-medium hover:bg-teal-600 disabled:opacity-50 transition-colors"
             >
               {isAddingMember ? 'Adding...' : 'Add'}
             </button>
           </div>
-        </div>
+          <p className="text-xs text-stone-400 mt-3">
+            New members must already have a Pause account with this email address.
+          </p>
+        </motion.div>
 
-        {/* Members list */}
-        <div className="bg-white/90 rounded-3xl p-6 shadow-xl shadow-stone-300/40 border border-stone-300/50">
+        {/* Members List */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="bg-white/90 rounded-3xl p-6 shadow-xl shadow-stone-300/40 border border-stone-300/50"
+        >
           <h2 className="text-lg font-semibold text-stone-800 mb-4 flex items-center gap-2">
             <Users className="w-5 h-5 text-teal-600" />
-            Members
+            Team Members
           </h2>
-          <div className="space-y-3">
+          <div className="divide-y divide-stone-100">
             {members.map((member) => (
               <div
                 key={member.id + member.email}
-                className="flex items-center justify-between py-3 px-4 rounded-xl hover:bg-stone-50 transition-colors"
+                className="flex items-center justify-between py-4 first:pt-0 last:pb-0"
               >
-                <span className="text-stone-700">{member.email}</span>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-teal-50 flex items-center justify-center">
+                    <span className="text-sm font-medium text-teal-600">
+                      {member.email.charAt(0).toUpperCase()}
+                    </span>
+                  </div>
+                  <div>
+                    <p className="font-medium text-stone-700">{member.email}</p>
+                    <p className="text-xs text-stone-400">
+                      {member.id === team.created_by ? 'Team Owner' : 'Member'}
+                    </p>
+                  </div>
+                </div>
                 {member.id !== team.created_by && (
                   <button
                     onClick={() => handleRemoveMember(member.email)}
-                    className="text-red-400 hover:text-red-600 transition-colors"
-                    title="Remove member"
+                    className="flex items-center gap-2 text-red-400 hover:text-red-600 transition-colors text-sm font-medium"
                   >
                     <Trash2 className="w-4 h-4" />
+                    Remove
                   </button>
                 )}
               </div>
             ))}
+            {members.length === 0 && (
+              <p className="text-center text-stone-400 py-8">
+                No members yet. Add your first team member above.
+              </p>
+            )}
           </div>
-        </div>
+        </motion.div>
       </main>
     </>
   );
