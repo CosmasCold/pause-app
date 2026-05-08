@@ -27,8 +27,9 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
     });
 
     if (error) {
-      toast.error('Failed to send magic link');
-    } else {
+  console.error('Magic link error:', error);
+  toast.error(`Failed: ${error.message}`);
+} else {
       setIsMagicLinkSent(true);
       toast.success('Magic link sent! Check your email.');
     }
