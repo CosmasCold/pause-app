@@ -231,17 +231,17 @@ function SettingsContent() {
         <div className="flex items-center gap-4 mb-6">
           <div className="relative">
             {avatarPreview ? (
-  // eslint-disable-next-line @next/next/no-img-element
-  <img
-    src={avatarPreview}
-    alt="Avatar"
-    className="w-16 h-16 rounded-full object-cover border-2 border-stone-200"
-  />
-) : (
-  <div className="w-16 h-16 rounded-full bg-teal-100 flex items-center justify-center">
-    <UserIcon className="w-8 h-8 text-teal-600" />
-  </div>
-)}
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={avatarPreview}
+                alt="Avatar"
+                className="w-16 h-16 rounded-full object-cover border-2 border-stone-200"
+              />
+            ) : (
+              <div className="w-16 h-16 rounded-full bg-teal-100 flex items-center justify-center">
+                <UserIcon className="w-8 h-8 text-teal-600" />
+              </div>
+            )}
             <button
               onClick={() => fileInputRef.current?.click()}
               className="absolute -bottom-1 -right-1 bg-white rounded-full p-1 shadow border border-stone-200"
@@ -350,42 +350,44 @@ function SettingsContent() {
         </div>
       </motion.div>
 
-      {/* Notifications Section */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2 }}
-        className="bg-white/90 rounded-3xl p-6 shadow-xl shadow-stone-300/40 border border-stone-300/50 mb-6"
-      >
-        <h2 className="text-lg font-semibold text-stone-800 mb-6 flex items-center gap-2">
-          <Bell className="w-5 h-5 text-teal-600" />
-          Notifications
-        </h2>
+      {/* Notifications Section – gated to Pro / Team */}
+      {profile?.tier !== 'free' && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="bg-white/90 rounded-3xl p-6 shadow-xl shadow-stone-300/40 border border-stone-300/50 mb-6"
+        >
+          <h2 className="text-lg font-semibold text-stone-800 mb-6 flex items-center gap-2">
+            <Bell className="w-5 h-5 text-teal-600" />
+            Notifications
+          </h2>
 
-        <div className="space-y-4">
-          <div className="flex items-center justify-between py-3">
-            <div>
-              <p className="font-medium text-stone-700">Weekly Report</p>
-              <p className="text-stone-500 text-sm">
-                Receive a weekly summary of your communication patterns
-              </p>
-            </div>
-            <button
-              onClick={handleToggleReports}
-              disabled={savingReports}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                emailReports ? 'bg-teal-500' : 'bg-stone-300'
-              }`}
-            >
-              <span
-                className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${
-                  emailReports ? 'translate-x-6' : 'translate-x-1'
+          <div className="space-y-4">
+            <div className="flex items-center justify-between py-3">
+              <div>
+                <p className="font-medium text-stone-700">Weekly Report</p>
+                <p className="text-stone-500 text-sm">
+                  Receive a weekly summary of your communication patterns
+                </p>
+              </div>
+              <button
+                onClick={handleToggleReports}
+                disabled={savingReports}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                  emailReports ? 'bg-teal-500' : 'bg-stone-300'
                 }`}
-              />
-            </button>
+              >
+                <span
+                  className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${
+                    emailReports ? 'translate-x-6' : 'translate-x-1'
+                  }`}
+                />
+              </button>
+            </div>
           </div>
-        </div>
-      </motion.div>
+        </motion.div>
+      )}
 
       {/* Danger Zone */}
       <motion.div

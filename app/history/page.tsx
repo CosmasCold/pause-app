@@ -11,11 +11,14 @@ import {
   Download,
   RefreshCw,
   ArrowLeft,
+  FileText,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 interface SavedAnalysis {
   id: string;
@@ -115,6 +118,32 @@ export default function HistoryPage() {
     toast.success('History exported!');
   };
 
+  const downloadPDF = () => {
+    const doc = new jsPDF();
+    doc.setFontSize(16);
+    doc.text('Pause - Analysis History', 14, 20);
+    doc.setFontSize(10);
+    doc.text(`Exported on ${new Date().toLocaleDateString()}`, 14, 28);
+
+    const tableData = filteredAnalyses.map((a) => [
+      new Date(a.created_at).toLocaleDateString(),
+      a.context,
+      `${a.regret_score}%`,
+      a.biases?.map(b => b.type).join(', '),
+      a.original_text.substring(0, 80) + '...',
+    ]);
+
+    autoTable(doc, {
+      startY: 35,
+      head: [['Date', 'Context', 'Regret', 'Biases', 'Excerpt']],
+      body: tableData,
+      styles: { fontSize: 8 },
+      headStyles: { fillColor: [13, 148, 136] },
+    });
+
+    doc.save(`pause-history-${new Date().toISOString().split('T')[0]}.pdf`);
+  };
+
   const filteredAnalyses = analyses
     .filter(a => {
       const matchesSearch = a.original_text.toLowerCase().includes(searchTerm.toLowerCase());
@@ -147,11 +176,18 @@ export default function HistoryPage() {
 
         <div className="flex gap-3">
           <button
+            onClick={downloadPDF}
+            className="flex items-center gap-2 px-4 py-2.5 bg-white/80 rounded-2xl border border-stone-300/50 hover:bg-white transition-colors text-stone-700"
+          >
+            <FileText className="w-4 h-4" />
+            PDF
+          </button>
+          <button
             onClick={exportHistory}
             className="flex items-center gap-2 px-4 py-2.5 bg-white/80 rounded-2xl border border-stone-300/50 hover:bg-white transition-colors text-stone-700"
           >
             <Download className="w-4 h-4" />
-            Export
+            CSV
           </button>
           <button
             onClick={fetchHistory}

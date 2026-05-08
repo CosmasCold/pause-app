@@ -29,7 +29,8 @@ export async function GET() {
     const { data: users } = await supabase
       .from('user_profiles')
       .select('id, email')
-      .eq('email_reports', true);
+      .eq('email_reports', true)
+      .neq('tier', 'free');   // exclude free users
 
     if (!users || users.length === 0) {
       return NextResponse.json({ message: 'No users subscribed to reports' });
@@ -153,7 +154,7 @@ function buildEmailHtml(name: string, report: WeeklyReport) {
       <p><strong>Most used context:</strong> ${report.mostUsedContext}</p>
       <p><strong>Top bias detected:</strong> ${report.topBias}</p>
       <hr style="border-color:#e7e5e4;margin:24px 0" />
-      <a href="https://pause-app.vercel.app" style="display:inline-block;background:#1c1917;color:white;padding:12px 32px;border-radius:12px;text-decoration:none">Open Pause</a>
+      <a href="https://pause-app-opal.vercel.app" style="display:inline-block;background:#1c1917;color:white;padding:12px 32px;border-radius:12px;text-decoration:none">Open Pause</a>
     </div>
   `;
 }
