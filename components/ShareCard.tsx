@@ -3,7 +3,7 @@
 
 import { useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Link2, Download, X } from 'lucide-react';
+import { Link2, Download, X, Share2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 interface ShareCardProps {
@@ -94,19 +94,25 @@ export default function ShareCard({
     );
   };
 
-  const handleLinkedInShare = async () => {
-    // Copy the full analysis text so the user can paste it if they want
-    await copyToClipboard(shareText);
-    
-    // Open LinkedIn's share composer with the app's URL
+  const handleNativeShare = async () => {
     const appUrl = window.location.origin;
-    const linkedInUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(appUrl)}`;
-    
-    window.open(linkedInUrl, '_blank', 'noopener');
-    
-    toast.success('Link copied! Share on LinkedIn and paste your analysis (Ctrl+V) if you want to include it.', {
-      duration: 6000,
-    });
+    const shareData = {
+      title: 'My Pause Analysis',
+      text: shareText,
+      url: appUrl,
+    };
+
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData);
+        toast.success('Shared! Thanks for spreading the word.');
+        return;
+      } catch {
+        // fall through
+      }
+    }
+    await copyToClipboard(shareText);
+    toast.success('Analysis copied! Share it anywhere you like.', { duration: 4000 });
   };
 
   if (!isOpen) return null;
@@ -185,11 +191,11 @@ export default function ShareCard({
             </button>
 
             <button
-              onClick={handleLinkedInShare}
-              className="flex items-center justify-center gap-2 p-3 bg-[#0A66C2] text-white rounded-2xl hover:bg-[#004182] transition-colors"
+              onClick={handleNativeShare}
+              className="flex items-center justify-center gap-2 p-3 bg-teal-500 text-white rounded-2xl hover:bg-teal-600 transition-colors"
             >
-              <Link2 className="w-4 h-4" />
-              LinkedIn
+              <Share2 className="w-4 h-4" />
+              Share
             </button>
 
             <button

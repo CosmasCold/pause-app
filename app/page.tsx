@@ -185,6 +185,24 @@ export default function Home() {
     if (!analysis || isSaved) return;
     setIsSaving(true);
 
+// ----- FREE TIER GATE -----
+  if (userTier === 'free') {
+    toast.error('Upgrade to Pro to save analyses.', {
+      duration: 5000,
+    });
+    setIsSaving(false);
+    return;
+  }
+  // ---- end gate ----
+
+     // ----- NEW: Pro gate -----
+  if (userTier !== 'pro' && userTier !== 'team') {
+    toast.error('Save to history is a Pro feature. Upgrade to save.');
+    setIsSaving(false);
+    return;
+  }
+  // --- end gate ---
+
     if (!user) {
       toast.error('Sign in to save analyses');
       setIsSaving(false);
