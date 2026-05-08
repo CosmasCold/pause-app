@@ -16,30 +16,30 @@ export default function Navigation() {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [profileName, setProfileName] = useState('');
   const [profileAvatar, setProfileAvatar] = useState('');
+  const [userTier, setUserTier] = useState('free');
   const menuRef = useRef<HTMLDivElement>(null);
 
   // Auth state
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => setUser(user ?? null));
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-    });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (_event, session) => setUser(session?.user ?? null)
+    );
     return () => subscription.unsubscribe();
   }, []);
 
-  // Load profile (name & avatar)
+  // Load profile (name, avatar, tier)
   useEffect(() => {
     if (!user) return;
     const loadProfile = async () => {
       const { data } = await supabase
         .from('user_profiles')
-        .select('name, avatar_url')
+        .select('name, avatar_url, tier')
         .eq('id', user.id)
         .single();
       setProfileName(data?.name || '');
       setProfileAvatar(data?.avatar_url || '');
+      setUserTier(data?.tier || 'free');
     };
     loadProfile();
   }, [user]);
@@ -118,14 +118,18 @@ export default function Navigation() {
                         <History className="w-4 h-4 text-stone-400" />
                         <span className="text-stone-700">History</span>
                       </Link>
-                      <Link
-                        href="/team"
-                        className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-stone-50 transition-colors"
-                        onClick={() => setShowUserMenu(false)}
-                      >
-                        <Users className="w-4 h-4 text-stone-400" />
-                        <span className="text-stone-700">Team</span>
-                      </Link>
+
+                      {userTier === 'team' && (
+                        <Link
+                          href="/team"
+                          className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-stone-50 transition-colors"
+                          onClick={() => setShowUserMenu(false)}
+                        >
+                          <Users className="w-4 h-4 text-stone-400" />
+                          <span className="text-stone-700">Team</span>
+                        </Link>
+                      )}
+
                       <Link
                         href="/settings"
                         className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-stone-50 transition-colors"
@@ -134,7 +138,9 @@ export default function Navigation() {
                         <Settings className="w-4 h-4 text-stone-400" />
                         <span className="text-stone-700">Settings</span>
                       </Link>
+
                       <hr className="my-2 border-stone-100" />
+
                       <button
                         onClick={handleSignOut}
                         className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-stone-50 transition-colors text-red-600"
