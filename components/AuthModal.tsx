@@ -3,7 +3,7 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X } from 'lucide-react';
+import { X, ArrowLeft } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import toast from 'react-hot-toast';
 
@@ -16,6 +16,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isMagicLinkSent, setIsMagicLinkSent] = useState(false);
+  const [isForgotPassword, setIsForgotPassword] = useState(false);
 
   const handleMagicLink = async () => {
     setIsLoading(true);
@@ -45,6 +46,25 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
     if (error) toast.error('Failed to sign in with Google');
   };
 
+  const handleForgotPassword = async () => {
+    if (!email) {
+      toast.error('Enter your email address');
+      return;
+    }
+    setIsLoading(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/auth/reset-password`,
+    });
+
+    if (error) {
+      toast.error('Could not send reset email');
+    } else {
+      toast.success('Check your email for a reset link');
+      setIsForgotPassword(false);
+    }
+    setIsLoading(false);
+  };
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -64,17 +84,64 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
           >
             <div className="flex justify-between items-center mb-8">
               <h2 className="text-3xl font-playfair font-bold text-stone-800">
-                Welcome to Pause
+                {isForgotPassword ? 'Reset Password' : 'Welcome to Pause'}
               </h2>
-              <button
-                onClick={onClose}
-                className="text-stone-400 hover:text-stone-600"
-              >
+              <button onClick={onClose} className="text-stone-400 hover:text-stone-600">
                 <X className="w-6 h-6" />
               </button>
             </div>
 
-            {!isMagicLinkSent ? (
+            {isForgotPassword ? (
+              // ---------- forgot password ----------
+              <div className="space-y-4">
+                {isMagicLinkSent ? (
+                  <div className="text-center py-8">
+                    <div className="text-4xl mb-4">📧</div>
+                    <h3 className="text-xl font-semibold mb-2 text-stone-800">Check your email!</h3>
+                    <p className="text-stone-500">
+                      We sent a reset link to <strong>{email}</strong>
+                    </p>
+                    <button
+                      onClick={() => {
+                        setIsMagicLinkSent(false);
+                        setIsForgotPassword(false);
+                      }}
+                      className="mt-6 text-teal-600 hover:text-teal-700"
+                    >
+                      Back to sign in
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => setIsForgotPassword(false)}
+                      className="flex items-center gap-2 text-stone-500 hover:text-stone-700 text-sm"
+                    >
+                      <ArrowLeft className="w-4 h-4" />
+                      Back to sign in
+                    </button>
+                    <p className="text-stone-600 text-sm">
+  Enter your email and we&apos;ll send you a link to set a new password.
+</p>
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="you@example.com"
+                      className="w-full px-4 py-3.5 border-2 border-stone-200 rounded-2xl focus:outline-none focus:border-teal-500 text-stone-700"
+                    />
+                    <button
+                      onClick={handleForgotPassword}
+                      disabled={isLoading || !email}
+                      className="w-full bg-teal-500 text-white py-3.5 rounded-2xl font-medium hover:bg-teal-600 transition-colors disabled:opacity-50"
+                    >
+                      {isLoading ? 'Sending...' : 'Send Reset Link'}
+                    </button>
+                  </>
+                )}
+              </div>
+            ) : (
+              // ---------- normal sign in ----------
               <>
                 <div className="space-y-4 mb-6">
                   <button
@@ -110,7 +177,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="you@example.com"
-                      className="w-full px-4 py-3.5 border-2 border-stone-200 rounded-2xl focus:outline-none focus:border-teal-500 transition-colors text-stone-700"
+                      className="w-full px-4 py-3.5 border-2 border-stone-200 rounded-2xl focus:outline-none focus:border-teal-500 text-stone-700"
                     />
                   </div>
 
@@ -122,28 +189,23 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
                     {isLoading ? 'Sending...' : 'Send Magic Link'}
                   </button>
                 </div>
+
+                <div className="mt-4 text-center">
+                  <button
+                    onClick={() => setIsForgotPassword(true)}
+                    className="text-sm text-teal-600 hover:text-teal-700"
+                  >
+                    Forgot password?
+                  </button>
+                </div>
               </>
-            ) : (
-              <div className="text-center py-8">
-                <div className="text-4xl mb-4">📧</div>
-                <h3 className="text-xl font-semibold mb-2 text-stone-800">
-                  Check your email!
-                </h3>
-                <p className="text-stone-500">
-                  We sent a magic link to <strong>{email}</strong>
-                </p>
-                <button
-                  onClick={() => setIsMagicLinkSent(false)}
-                  className="mt-6 text-teal-600 hover:text-teal-700"
-                >
-                  Use a different email
-                </button>
-              </div>
             )}
 
             <p className="text-xs text-center text-stone-400 mt-8">
-              By continuing, you agree to our Terms of Service and Privacy
-              Policy.
+              By continuing, you agree to our{' '}
+              <a href="/privacy" className="underline">
+                Privacy Policy
+              </a>.
             </p>
           </motion.div>
         </motion.div>
