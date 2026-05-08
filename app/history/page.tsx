@@ -3,10 +3,19 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { Search, Trash2, Star, ChevronDown, Download, RefreshCw } from 'lucide-react';
+import {
+  Search,
+  Trash2,
+  Star,
+  ChevronDown,
+  Download,
+  RefreshCw,
+  ArrowLeft,
+} from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 interface SavedAnalysis {
   id: string;
@@ -20,6 +29,7 @@ interface SavedAnalysis {
 }
 
 export default function HistoryPage() {
+  const router = useRouter();
   const [analyses, setAnalyses] = useState<SavedAnalysis[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -63,7 +73,9 @@ export default function HistoryPage() {
       .eq('id', id);
 
     if (!error) {
-      setAnalyses(prev => prev.map(a => (a.id === id ? { ...a, is_favorite: !current } : a)));
+      setAnalyses(prev =>
+        prev.map(a => (a.id === id ? { ...a, is_favorite: !current } : a))
+      );
       toast.success(current ? 'Removed from favorites' : 'Added to favorites');
     }
   };
@@ -119,6 +131,14 @@ export default function HistoryPage() {
 
   return (
     <main className="max-w-4xl mx-auto px-4 py-12">
+      <button
+        onClick={() => router.push('/')}
+        className="flex items-center gap-2 text-stone-500 hover:text-stone-700 mb-8 transition-colors"
+      >
+        <ArrowLeft className="w-4 h-4" />
+        <span className="text-sm font-medium">Back to Analyzer</span>
+      </button>
+
       <div className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-4xl font-playfair font-bold text-stone-800 mb-2">History</h1>
@@ -247,7 +267,9 @@ export default function HistoryPage() {
                   </div>
 
                   <button
-                    onClick={() => setExpandedId(expandedId === analysis.id ? null : analysis.id)}
+                    onClick={() =>
+                      setExpandedId(expandedId === analysis.id ? null : analysis.id)
+                    }
                     className="flex items-center gap-1 text-teal-600 hover:text-teal-700 transition-colors text-sm font-medium"
                   >
                     Details
@@ -271,7 +293,10 @@ export default function HistoryPage() {
                       <h4 className="text-sm font-semibold text-stone-700 mb-2">Biases</h4>
                       <div className="flex flex-wrap gap-2">
                         {analysis.biases.map((bias, i) => (
-                          <span key={i} className="px-3 py-1 bg-amber-50 text-amber-700 rounded-full text-xs font-medium">
+                          <span
+                            key={i}
+                            className="px-3 py-1 bg-amber-50 text-amber-700 rounded-full text-xs font-medium"
+                          >
                             {bias.type}
                           </span>
                         ))}
@@ -282,9 +307,15 @@ export default function HistoryPage() {
                     <div>
                       <h4 className="text-sm font-semibold text-stone-700 mb-2">Tone</h4>
                       <div className="flex gap-3 text-sm text-stone-600">
-                        <span>Start: <strong className="capitalize">{analysis.emotional_tone.start}</strong></span>
-                        <span>End: <strong className="capitalize">{analysis.emotional_tone.end}</strong></span>
-                        <span>Intensity: <strong className="capitalize">{analysis.emotional_tone.intensity}</strong></span>
+                        <span>
+                          Start: <strong className="capitalize">{analysis.emotional_tone.start}</strong>
+                        </span>
+                        <span>
+                          End: <strong className="capitalize">{analysis.emotional_tone.end}</strong>
+                        </span>
+                        <span>
+                          Intensity: <strong className="capitalize">{analysis.emotional_tone.intensity}</strong>
+                        </span>
                       </div>
                     </div>
                   )}
