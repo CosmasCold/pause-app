@@ -113,29 +113,54 @@ export default function Home() {
       toast.success('Analysis complete');
 
       // Increment usage for free users
-      if (isFree) {
-        const newCount = analysesUsed + 1;
-        setAnalysesUsed(newCount);
-        const today = new Date().toISOString().split('T')[0];
-        const { error: upsertError } = await supabase
-          .from('user_profiles')
-          .upsert(
-            {
-              id: (await supabase.auth.getUser()).data.user?.id,
-              email: (await supabase.auth.getUser()).data.user?.email,
-              tier: 'free',
-              analyses_today: newCount,
-              last_analysis_date: today,
-            },
-            { onConflict: 'id' }
-          );
+      // Increment usage for free users
+if (isFree) {
+  const user = (await supabase.auth.getUser()).data.user;
+  if (!user) {
+    toast.error('Please sign in again.');
+    return;
+  }
 
-        if (upsertError) {
-          console.error('Failed to save usage:', upsertError);
-          setAnalysesUsed(newCount - 1);
-          toast.error('Could not save your usage. Please try again.');
-        }
-      }
+  const today = new Date().toISOString().split('T')[0];
+
+  // Fetch the latest profile to get current tier and check if a reset is needed
+  const { data: profile } = await supabase
+    .from('user_profiles')
+    .select('analyses_today, last_analysis_date, tier')
+    .eq('id', user.id)
+    .single();
+
+  let newCount = (profile?.analyses_today || 0) + 1;
+  const currentTier = profile?.tier || 'free';
+
+  // Reset count if it's a new day (even if profile was created just now)
+  if (profile && profile.last_analysis_date !== today) {
+    newCount = 1;
+  }
+
+  // Optimistic UI update
+  setAnalysesUsed(newCount);
+
+  // Upsert the row with the new count, using the correct tier
+  const { error } = await supabase
+    .from('user_profiles')
+    .upsert(
+      {
+        id: user.id,
+        email: user.email,
+        tier: currentTier,          // keep existing tier (pro/free)
+        analyses_today: newCount,
+        last_analysis_date: today,
+      },
+      { onConflict: 'id' }
+    );
+
+  if (error) {
+    console.error('Failed to save usage:', error);
+    setAnalysesUsed(newCount - 1); // revert
+    toast.error('Could not save usage. Please try again.');
+  }
+}
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Analysis failed. Please try again.';
       toast.error(message);
