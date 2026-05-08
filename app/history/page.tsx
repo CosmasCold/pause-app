@@ -12,6 +12,7 @@ import {
   RefreshCw,
   ArrowLeft,
   FileText,
+  TrendingUp,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import toast from 'react-hot-toast';
@@ -51,7 +52,6 @@ export default function HistoryPage() {
       return;
     }
 
-    // Fetch the user's tier from user_profiles
     const { data: profile } = await supabase
       .from('user_profiles')
       .select('tier')
@@ -185,9 +185,9 @@ export default function HistoryPage() {
           <p className="text-stone-600">{analyses.length} analyses saved</p>
         </div>
 
-        {/* Export buttons: ONLY shown for pro/team users */}
-        <div className="flex gap-3">
-          {isPaid && (
+        {/* Export / Upgrade actions */}
+        <div className="flex gap-3 items-center">
+          {isPaid ? (
             <>
               <button
                 onClick={downloadPDF}
@@ -204,6 +204,14 @@ export default function HistoryPage() {
                 CSV
               </button>
             </>
+          ) : (
+            <Link
+              href="/pricing"
+              className="flex items-center gap-2 px-4 py-2.5 bg-teal-500 text-white rounded-2xl font-medium hover:bg-teal-600 transition-colors text-sm shadow-lg shadow-teal-200/30"
+            >
+              <TrendingUp className="w-4 h-4" />
+              Upgrade to Export
+            </Link>
           )}
           <button
             onClick={fetchHistory}

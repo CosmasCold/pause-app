@@ -25,7 +25,7 @@ export default function ContactPage() {
     } else {
       toast.error(data.error || 'Failed to send message');
     }
-  } catch (err) {
+  } catch {
     toast.error('Network error – please try again.');
   } finally {
     setSending(false);
