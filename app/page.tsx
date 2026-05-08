@@ -38,30 +38,44 @@ export default function Home() {
   const FREE_LIMIT = 3;
   const FREE_CHAR_LIMIT = 1000;
 
-  // Load user profile on mount
+  // Load user profile on mount, create if missing, reset daily count if new day
   useEffect(() => {
     const loadProfile = async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const today = new Date().toISOString().split('T')[0];
-        const { data } = await supabase
-          .from('user_profiles')
-          .select('tier, analyses_today, last_analysis_date')
-          .eq('id', user.id)
-          .single();
-        if (data) {
-          setUserTier(data.tier || 'free');
-          if (data.last_analysis_date === today) {
-            setAnalysesUsed(data.analyses_today || 0);
-          } else {
-            // Reset for new day
-            setAnalysesUsed(0);
-            if (data.tier === 'free') {
-              await supabase
-                .from('user_profiles')
-                .update({ analyses_today: 0, last_analysis_date: today })
-                .eq('id', user.id);
-            }
+      if (!user) {
+        setIsLoadingProfile(false);
+        return;
+      }
+      const today = new Date().toISOString().split('T')[0];
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .select('tier, analyses_today, last_analysis_date')
+        .eq('id', user.id)
+        .single();
+
+      if (error || !data) {
+        // Profile doesn't exist – create it
+        await supabase.from('user_profiles').insert({
+          id: user.id,
+          email: user.email,
+          tier: 'free',
+          analyses_today: 0,
+          last_analysis_date: today,
+        });
+        setUserTier('free');
+        setAnalysesUsed(0);
+      } else {
+        setUserTier((data.tier as 'free' | 'pro' | 'team') || 'free');
+        if (data.last_analysis_date === today) {
+          setAnalysesUsed(data.analyses_today || 0);
+        } else {
+          // New day – reset usage
+          setAnalysesUsed(0);
+          if ((data.tier || 'free') === 'free') {
+            await supabase
+              .from('user_profiles')
+              .update({ analyses_today: 0, last_analysis_date: today })
+              .eq('id', user.id);
           }
         }
       }
@@ -103,15 +117,24 @@ export default function Home() {
         const newCount = analysesUsed + 1;
         setAnalysesUsed(newCount);
         const today = new Date().toISOString().split('T')[0];
-        await supabase
+        const { error: upsertError } = await supabase
           .from('user_profiles')
-          .upsert({
-            id: (await supabase.auth.getUser()).data.user?.id,
-            email: (await supabase.auth.getUser()).data.user?.email,
-            tier: 'free',
-            analyses_today: newCount,
-            last_analysis_date: today,
-          }, { onConflict: 'id' });
+          .upsert(
+            {
+              id: (await supabase.auth.getUser()).data.user?.id,
+              email: (await supabase.auth.getUser()).data.user?.email,
+              tier: 'free',
+              analyses_today: newCount,
+              last_analysis_date: today,
+            },
+            { onConflict: 'id' }
+          );
+
+        if (upsertError) {
+          console.error('Failed to save usage:', upsertError);
+          setAnalysesUsed(newCount - 1);
+          toast.error('Could not save your usage. Please try again.');
+        }
       }
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Analysis failed. Please try again.';
@@ -138,7 +161,7 @@ export default function Home() {
       return;
     }
 
-    // Ensure user profile exists, but DO NOT overwrite the tier
+    // Ensure user profile exists, but DON'T overwrite tier
     const { data: profile } = await supabase
       .from('user_profiles')
       .select('id')
@@ -396,7 +419,7 @@ export default function Home() {
                           {Math.round(bias.confidence * 100)}% confidence
                         </span>
                       </div>
-                      <p className="text-sm text-stone-600 mb-2">
+                      <p className="text-sm text-stone-600 mb-2 break-words line-clamp-2">
                         &ldquo;{bias.excerpt}&rdquo;
                       </p>
                       <p className="text-xs text-stone-500">{bias.explanation}</p>
@@ -511,8 +534,8 @@ export default function Home() {
   );
 }
 
-// Helper components (ResultsCard, ToneIndicator, FeatureCard) remain unchanged
-// ... include the same helper functions as before ...
+// ---------- Helper Components ----------
+
 function ResultsCard({
   icon,
   title,
@@ -578,7 +601,8 @@ function FeatureCard({
   );
 }
 
-// Utility functions
+// ---------- Utility Functions ----------
+
 function getPlaceholder(context: WritingContext): string {
   const placeholders: Record<WritingContext, string> = {
     email: "Dear team, I wanted to address the concerns raised in yesterday's meeting...",
