@@ -42,6 +42,21 @@ export default function ShareCard({
     100
   )}...\u201D\n\n${scoreMessage}.`;
 
+  const copyToClipboard = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch {
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textarea);
+      return true;
+    }
+  };
+
   const handleDownload = async () => {
     if (!cardRef.current) return;
     setIsGenerating(true);
@@ -67,21 +82,6 @@ export default function ShareCard({
     }
   };
 
-  const copyToClipboard = async (text: string) => {
-    try {
-      await navigator.clipboard.writeText(text);
-      return true;
-    } catch {
-      const textarea = document.createElement('textarea');
-      textarea.value = text;
-      document.body.appendChild(textarea);
-      textarea.select();
-      document.execCommand('copy');
-      document.body.removeChild(textarea);
-      return true;
-    }
-  };
-
   const handleCopyLink = async () => {
     await copyToClipboard(shareText);
     toast.success('Copied to clipboard!');
@@ -95,8 +95,18 @@ export default function ShareCard({
   };
 
   const handleLinkedInShare = async () => {
+    // Copy the full analysis text so the user can paste it if they want
     await copyToClipboard(shareText);
-    toast.success('Analysis copied! Paste with Ctrl+V on LinkedIn or anywhere you like.');
+    
+    // Open LinkedIn's share composer with the app's URL
+    const appUrl = window.location.origin;
+    const linkedInUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(appUrl)}`;
+    
+    window.open(linkedInUrl, '_blank', 'noopener');
+    
+    toast.success('Link copied! Share on LinkedIn and paste your analysis (Ctrl+V) if you want to include it.', {
+      duration: 6000,
+    });
   };
 
   if (!isOpen) return null;
