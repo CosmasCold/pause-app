@@ -49,7 +49,7 @@ export async function GET() {
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-              from: 'Pause <onboarding@resend.dev>',
+             from: 'Pause <noreply@pauseapp.space>',
               to: user.email,
               subject: `Your Weekly Pause Report – ${report.averageRegretScore}% regret probability`,
               html: buildEmailHtml(user.email.split('@')[0], report),
@@ -154,7 +154,7 @@ function buildEmailHtml(name: string, report: WeeklyReport) {
       <p><strong>Most used context:</strong> ${report.mostUsedContext}</p>
       <p><strong>Top bias detected:</strong> ${report.topBias}</p>
       <hr style="border-color:#e7e5e4;margin:24px 0" />
-      <a href="https://pause-app-opal.vercel.app" style="display:inline-block;background:#1c1917;color:white;padding:12px 32px;border-radius:12px;text-decoration:none">Open Pause</a>
+      <a href="https://pauseapp.space" style="display:inline-block;background:#1c1917;color:white;padding:12px 32px;border-radius:12px;text-decoration:none">Open Pause</a>
     </div>
   `;
 }

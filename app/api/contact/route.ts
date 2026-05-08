@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: 'Pause Contact <onboarding@resend.dev>',
+        from: 'Pause Contact <noreply@pauseapp.space>',
         to: 'coldcosmas@gmail.com',
         subject: `Contact from ${name}`,
         html: `
