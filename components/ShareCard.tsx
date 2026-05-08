@@ -149,6 +149,7 @@ export default function ShareCard({
           >
             {/* Logo */}
   <div className="text-center mb-4">
+    {/* eslint-disable-next-line @next/next/no-img-element */}
     <img
   src="/logo.png"
   alt="Pause"

@@ -23,7 +23,6 @@ import { AnalysisResult, WritingContext } from '@/lib/types';
 import ShareCard from '@/components/ShareCard';
 import { supabase } from '@/lib/supabase';
 import AuthModal from '@/components/AuthModal';
-import Image from 'next/image';
 
 export default function Home() {
   const [text, setText] = useState('');
@@ -257,6 +256,7 @@ export default function Home() {
           className="text-center max-w-2xl"
         >
  <div className="mb-8 flex justify-center">
+  {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
   src="/logo.png"
   alt="Pause"
