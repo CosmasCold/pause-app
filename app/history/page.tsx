@@ -39,6 +39,7 @@ export default function HistoryPage() {
   const [contextFilter, setContextFilter] = useState('all');
   const [sortBy, setSortBy] = useState<'date' | 'score'>('date');
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [userTier, setUserTier] = useState<string>('free');
 
   const initialized = useRef(false);
 
@@ -49,6 +50,14 @@ export default function HistoryPage() {
       setLoading(false);
       return;
     }
+
+    // Fetch the user's tier from user_profiles
+    const { data: profile } = await supabase
+      .from('user_profiles')
+      .select('tier')
+      .eq('id', user.id)
+      .single();
+    setUserTier(profile?.tier || 'free');
 
     const { data, error } = await supabase
       .from('saved_analyses')
@@ -158,6 +167,8 @@ export default function HistoryPage() {
   const scoreColor = (score: number) =>
     score < 30 ? 'text-teal-600' : score < 60 ? 'text-amber-600' : 'text-red-600';
 
+  const isPaid = userTier === 'pro' || userTier === 'team';
+
   return (
     <main className="max-w-4xl mx-auto px-4 py-12">
       <button
@@ -174,21 +185,26 @@ export default function HistoryPage() {
           <p className="text-stone-600">{analyses.length} analyses saved</p>
         </div>
 
+        {/* Export buttons: ONLY shown for pro/team users */}
         <div className="flex gap-3">
-          <button
-            onClick={downloadPDF}
-            className="flex items-center gap-2 px-4 py-2.5 bg-white/80 rounded-2xl border border-stone-300/50 hover:bg-white transition-colors text-stone-700"
-          >
-            <FileText className="w-4 h-4" />
-            PDF
-          </button>
-          <button
-            onClick={exportHistory}
-            className="flex items-center gap-2 px-4 py-2.5 bg-white/80 rounded-2xl border border-stone-300/50 hover:bg-white transition-colors text-stone-700"
-          >
-            <Download className="w-4 h-4" />
-            CSV
-          </button>
+          {isPaid && (
+            <>
+              <button
+                onClick={downloadPDF}
+                className="flex items-center gap-2 px-4 py-2.5 bg-white/80 rounded-2xl border border-stone-300/50 hover:bg-white transition-colors text-stone-700"
+              >
+                <FileText className="w-4 h-4" />
+                PDF
+              </button>
+              <button
+                onClick={exportHistory}
+                className="flex items-center gap-2 px-4 py-2.5 bg-white/80 rounded-2xl border border-stone-300/50 hover:bg-white transition-colors text-stone-700"
+              >
+                <Download className="w-4 h-4" />
+                CSV
+              </button>
+            </>
+          )}
           <button
             onClick={fetchHistory}
             className="p-2.5 bg-white/80 rounded-2xl border border-stone-300/50 hover:bg-white transition-colors"
@@ -241,8 +257,13 @@ export default function HistoryPage() {
         </div>
       ) : filteredAnalyses.length === 0 ? (
         <div className="text-center py-20">
-          <p className="text-stone-500 text-lg">No analyses found. Start analyzing some text!</p>
-          <Link href="/" className="mt-4 inline-block text-teal-600 hover:text-teal-700 font-medium">
+          <p className="text-stone-500 text-lg">
+            No analyses found. Start analyzing some text!
+          </p>
+          <Link
+            href="/"
+            className="mt-4 inline-block text-teal-600 hover:text-teal-700 font-medium"
+          >
             Go to analyzer →
           </Link>
         </div>
@@ -344,13 +365,16 @@ export default function HistoryPage() {
                       <h4 className="text-sm font-semibold text-stone-700 mb-2">Tone</h4>
                       <div className="flex gap-3 text-sm text-stone-600">
                         <span>
-                          Start: <strong className="capitalize">{analysis.emotional_tone.start}</strong>
+                          Start:{' '}
+                          <strong className="capitalize">{analysis.emotional_tone.start}</strong>
                         </span>
                         <span>
-                          End: <strong className="capitalize">{analysis.emotional_tone.end}</strong>
+                          End:{' '}
+                          <strong className="capitalize">{analysis.emotional_tone.end}</strong>
                         </span>
                         <span>
-                          Intensity: <strong className="capitalize">{analysis.emotional_tone.intensity}</strong>
+                          Intensity:{' '}
+                          <strong className="capitalize">{analysis.emotional_tone.intensity}</strong>
                         </span>
                       </div>
                     </div>
