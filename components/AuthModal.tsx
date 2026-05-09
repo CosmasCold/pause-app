@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import toast from 'react-hot-toast';
+import { useSearchParams } from 'next/navigation';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -13,23 +14,35 @@ interface AuthModalProps {
 }
 
 export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
-  const [email, setEmail] = useState('');
+  const searchParams = useSearchParams();
+  const inviteTeamId = searchParams.get('teamId');
+  const inviteEmail = searchParams.get('email');
+
+  // Start with the invite email if one is present, otherwise blank
+  const [email, setEmail] = useState(inviteEmail || '');
   const [isLoading, setIsLoading] = useState(false);
   const [isMagicLinkSent, setIsMagicLinkSent] = useState(false);
+
+  const buildRedirectUrl = () => {
+    const base = `${window.location.origin}/auth/callback`;
+    if (inviteTeamId && inviteEmail) {
+      return `${base}?teamId=${encodeURIComponent(inviteTeamId)}&email=${encodeURIComponent(inviteEmail)}`;
+    }
+    return base;
+  };
 
   const handleMagicLink = async () => {
     setIsLoading(true);
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
+        emailRedirectTo: buildRedirectUrl(),
       },
     });
 
     if (error) {
-  console.error('Magic link error:', error);
-  toast.error(`Failed: ${error.message}`);
-} else {
+      toast.error('Failed to send magic link');
+    } else {
       setIsMagicLinkSent(true);
       toast.success('Magic link sent! Check your email.');
     }
@@ -40,7 +53,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo: buildRedirectUrl(),
       },
     });
     if (error) toast.error('Failed to sign in with Google');
@@ -50,6 +63,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
     <AnimatePresence>
       {isOpen && (
         <motion.div
+          key={inviteEmail || 'no-invite'}   // forces remount when inviteEmail changes
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -65,12 +79,18 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
           >
             <div className="flex justify-between items-center mb-8">
               <h2 className="text-3xl font-playfair font-bold text-stone-800">
-                Welcome to Pause
+                {inviteTeamId ? 'Accept Invitation' : 'Welcome to Pause'}
               </h2>
               <button onClick={onClose} className="text-stone-400 hover:text-stone-600">
                 <X className="w-6 h-6" />
               </button>
             </div>
+
+            {inviteTeamId && (
+              <p className="text-sm text-stone-600 mb-4">
+                Sign in to join the team. If you don&apos;t have an account, one will be created for you.
+              </p>
+            )}
 
             {isMagicLinkSent ? (
               <div className="text-center py-8">
