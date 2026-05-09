@@ -44,20 +44,21 @@ const plans = [
     priceId: 'pro',
   },
   {
-    name: 'Team',
-    price: '$19',
-    period: 'per user/month',
-    description: 'For organizations and teams',
-    features: [
-      'Everything in Pro',
-      'Team analytics dashboard',
-      'Admin controls',
-      'Priority support',
-    ],
-      cta: 'Subscribe',
-    popular: false,
-    priceId: 'team',
-  },
+  name: 'Team',
+  price: '$19',
+  period: 'per month',
+  description: 'For organizations and teams',
+  features: [
+    'Up to 10 team members',
+    'Everything in Pro',
+    'Team analytics dashboard',
+    'Admin controls',
+    'Priority support',
+  ],
+  cta: 'Subscribe',
+  popular: false,
+  priceId: 'team',
+},
 ];
 
 export default function PricingPage() {
