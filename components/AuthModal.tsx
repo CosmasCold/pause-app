@@ -1,7 +1,7 @@
 // components/AuthModal.tsx
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, Suspense } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
@@ -23,26 +23,29 @@ function AuthModalContent({ isOpen, onClose }: AuthModalProps) {
   const [isMagicLinkSent, setIsMagicLinkSent] = useState(false);
 
   // Build the redirect URL without invite params (they'll be in a cookie)
-  const buildRedirectUrl = () => {
-    return `${window.location.origin}/auth/callback`;
+    const buildRedirectUrl = (withInvite = true) => {
+    const base = `${window.location.origin}/auth/callback`;
+    if (withInvite && inviteTeamId && inviteEmail) {
+      return `${base}?teamId=${encodeURIComponent(inviteTeamId)}&email=${encodeURIComponent(inviteEmail)}`;
+    }
+    return base;
   };
 
-  // Set a cookie with invite data before redirect
   const setInviteCookie = () => {
     if (inviteTeamId && inviteEmail) {
       const data = JSON.stringify({ teamId: inviteTeamId, email: inviteEmail });
-      // Set cookie for 15 minutes, path /
       document.cookie = `pause_invite=${encodeURIComponent(data)}; path=/; max-age=900; SameSite=Lax`;
     }
   };
 
   const handleMagicLink = async () => {
     setIsLoading(true);
-    setInviteCookie(); // set cookie before redirect
+    setInviteCookie();
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
-        emailRedirectTo: buildRedirectUrl(),
+        // Include invite parameters in the redirect URL for magic links
+        emailRedirectTo: buildRedirectUrl(true),
       },
     });
 
@@ -56,11 +59,12 @@ function AuthModalContent({ isOpen, onClose }: AuthModalProps) {
   };
 
   const handleGoogleLogin = async () => {
-    setInviteCookie(); // set cookie before redirect
+    setInviteCookie(); // cookie as fallback for OAuth (params may be stripped)
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: buildRedirectUrl(),
+        // OAuth redirect without invite params (they'll be in the cookie)
+        redirectTo: buildRedirectUrl(false),
       },
     });
     if (error) toast.error('Failed to sign in with Google');

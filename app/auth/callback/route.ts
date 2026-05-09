@@ -29,10 +29,30 @@ export async function GET(request: Request) {
             { onConflict: 'id' }
           );
 
-        // Handle team invite if present
-        const teamId = requestUrl.searchParams.get('teamId');
-        const inviteEmail = requestUrl.searchParams.get('email');
+        // 1. Check query params (magic link)
+        let teamId = requestUrl.searchParams.get('teamId');
+        let inviteEmail = requestUrl.searchParams.get('email');
 
+        // 2. Fallback: check cookie (Google OAuth)
+        if (!teamId || !inviteEmail) {
+          const cookieHeader = request.headers.get('cookie') || '';
+          const pauseInviteCookie = cookieHeader
+            .split(';')
+            .find((c) => c.trim().startsWith('pause_invite='));
+
+          if (pauseInviteCookie) {
+            try {
+              const encodedData = pauseInviteCookie.split('=')[1].trim();
+              const data = JSON.parse(decodeURIComponent(encodedData));
+              teamId = data.teamId;
+              inviteEmail = data.email;
+            } catch (parseError) {
+              console.error('Failed to parse pause_invite cookie:', parseError);
+            }
+          }
+        }
+
+        // 3. Process invite if data is valid
         if (teamId && inviteEmail && user.email === inviteEmail) {
           const supabaseAdmin = createClient(
             process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -40,11 +60,13 @@ export async function GET(request: Request) {
             { auth: { autoRefreshToken: false, persistSession: false } }
           );
 
+          // Add user to team and upgrade tier
           await supabaseAdmin
             .from('user_profiles')
             .update({ team_id: teamId, tier: 'team' })
             .eq('id', user.id);
 
+          // Increment seats used
           const { data: team } = await supabaseAdmin
             .from('teams')
             .select('seats_used')
@@ -57,11 +79,18 @@ export async function GET(request: Request) {
               .update({ seats_used: team.seats_used + 1 })
               .eq('id', teamId);
           }
+
+          // Clear the invite cookie
+          const response = NextResponse.redirect(requestUrl.origin);
+          response.headers.set(
+            'Set-Cookie',
+            'pause_invite=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax'
+          );
+          return response;
         }
       }
     }
   }
 
-  // Always redirect to home – never to an error page
   return NextResponse.redirect(requestUrl.origin);
 }
