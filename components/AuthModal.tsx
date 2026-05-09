@@ -1,7 +1,7 @@
 // components/AuthModal.tsx
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
@@ -13,26 +13,32 @@ interface AuthModalProps {
   onClose: () => void;
 }
 
-export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
+function AuthModalContent({ isOpen, onClose }: AuthModalProps) {
   const searchParams = useSearchParams();
   const inviteTeamId = searchParams.get('teamId');
   const inviteEmail = searchParams.get('email');
 
-  // Start with the invite email if one is present, otherwise blank
   const [email, setEmail] = useState(inviteEmail || '');
   const [isLoading, setIsLoading] = useState(false);
   const [isMagicLinkSent, setIsMagicLinkSent] = useState(false);
 
+  // Build the redirect URL without invite params (they'll be in a cookie)
   const buildRedirectUrl = () => {
-    const base = `${window.location.origin}/auth/callback`;
+    return `${window.location.origin}/auth/callback`;
+  };
+
+  // Set a cookie with invite data before redirect
+  const setInviteCookie = () => {
     if (inviteTeamId && inviteEmail) {
-      return `${base}?teamId=${encodeURIComponent(inviteTeamId)}&email=${encodeURIComponent(inviteEmail)}`;
+      const data = JSON.stringify({ teamId: inviteTeamId, email: inviteEmail });
+      // Set cookie for 15 minutes, path /
+      document.cookie = `pause_invite=${encodeURIComponent(data)}; path=/; max-age=900; SameSite=Lax`;
     }
-    return base;
   };
 
   const handleMagicLink = async () => {
     setIsLoading(true);
+    setInviteCookie(); // set cookie before redirect
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
@@ -50,6 +56,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
   };
 
   const handleGoogleLogin = async () => {
+    setInviteCookie(); // set cookie before redirect
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
@@ -63,7 +70,6 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          key={inviteEmail || 'no-invite'}   // forces remount when inviteEmail changes
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -169,5 +175,13 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
         </motion.div>
       )}
     </AnimatePresence>
+  );
+}
+
+export default function AuthModal(props: AuthModalProps) {
+  return (
+    <Suspense fallback={null}>
+      <AuthModalContent {...props} />
+    </Suspense>
   );
 }
