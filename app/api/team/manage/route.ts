@@ -12,42 +12,33 @@ const supabaseAdmin = createClient(
 
 export async function GET() {
   try {
-    console.log('GET /api/team/manage – starting');
     const supabase = await createServerClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
-      console.log('No user found');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    console.log('User ID:', user.id);
 
-    // Get user profile with service role
-    const { data: profile, error: profileError } = await supabaseAdmin
+    // Use admin client for all database queries
+    const { data: profile } = await supabaseAdmin
       .from('user_profiles')
       .select('team_id, tier')
       .eq('id', user.id)
       .single();
 
-    console.log('Profile query result:', profile, 'Error:', profileError);
-
     if (!profile?.team_id) {
       return NextResponse.json({ team: null });
     }
 
-    const { data: team, error: teamError } = await supabaseAdmin
+    const { data: team } = await supabaseAdmin
       .from('teams')
       .select('*')
       .eq('id', profile.team_id)
       .single();
 
-    console.log('Team query result:', team, 'Error:', teamError);
-
-    const { data: members, error: membersError } = await supabaseAdmin
+    const { data: members } = await supabaseAdmin
       .from('user_profiles')
       .select('id, email')
       .eq('team_id', profile.team_id);
-
-    console.log('Members count:', members?.length, 'Error:', membersError);
 
     return NextResponse.json({ team, members: members || [] });
   } catch (error) {
@@ -58,20 +49,18 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    console.log('POST /api/team/manage – starting');
     const supabase = await createServerClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
-      console.log('No user found');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const { action, teamName, memberEmail } = await request.json();
-    console.log('Action:', action);
 
     if (action === 'create') {
       if (!teamName) return NextResponse.json({ error: 'Team name required' }, { status: 400 });
 
+      // Verify tier using admin client
       const { data: profile } = await supabaseAdmin
         .from('user_profiles')
         .select('tier')
