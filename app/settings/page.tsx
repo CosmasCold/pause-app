@@ -73,39 +73,46 @@ function SettingsContent() {
 
   // Handle Stripe checkout session redirect – run once when profile is ready
   useEffect(() => {
-    const sessionId = searchParams.get('session_id');
-    if (!sessionId || !profile) return; // wait for profile to load
+  const sessionId = searchParams.get('session_id');
+  if (!sessionId || !profile) return;
 
-    // Avoid duplicate calls
-    if (confirmedRef.current) return;
-    confirmedRef.current = true;
+  // Prevent multiple calls
+  if (confirmedRef.current) return;
+  confirmedRef.current = true;
 
-    const confirmPayment = async () => {
-      try {
-        const response = await fetch('/api/confirm-payment', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ sessionId }),
-        });
-        const result = await response.json();
-        if (result.tier) {
-          setProfile((prev) => prev ? { ...prev, tier: result.tier } : prev);
-          toast.success(`Upgraded to ${result.tier}!`, { duration: 4000 });
-          // Force a full page reload so the navigation bar picks up the new tier
-          window.location.href = '/settings';
-        } else {
-          toast.error('Could not confirm payment');
-          // Remove session_id from URL to stop retrying
-          router.replace('/settings');
-        }
-      } catch {
+  const confirmPayment = async () => {
+    try {
+      const response = await fetch('/api/confirm-payment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionId }),
+      });
+      const result = await response.json();
+
+      if (result.tier) {
+        // 1) Update the profile state locally
+        setProfile((prev) => (prev ? { ...prev, tier: result.tier } : prev));
+        setEmailReports(profile?.email_reports ?? true);
+        setName(profile?.name ?? '');
+        setAvatarPreview(profile?.avatar_url ?? null);
+
+        // 2) Remove the session_id from the URL (so it doesn't run again)
+        router.replace('/settings');
+
+        // 3) Show success toast
+        toast.success(`Upgraded to ${result.tier}!`, { duration: 5000 });
+      } else {
         toast.error('Could not confirm payment');
         router.replace('/settings');
       }
-    };
+    } catch {
+      toast.error('Could not confirm payment');
+      router.replace('/settings');
+    }
+  };
 
-    confirmPayment();
-  }, [searchParams, profile, router]);
+  confirmPayment();
+}, [searchParams, profile, router]);
 
   const handleToggleReports = async () => {
     const newValue = !emailReports;
