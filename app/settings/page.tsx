@@ -65,37 +65,47 @@ function SettingsContent() {
   };
 
   useEffect(() => {
-  const sessionId = searchParams.get('session_id');
-  if (!sessionId || !profile) return; // wait for profile to load
-  
-  // If already confirmed, skip
-  if (confirmedRef.current) return;
-  confirmedRef.current = true;
-
-  const confirmPayment = async () => {
-    try {
-      const response = await fetch('/api/confirm-payment', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sessionId }),
-      });
-      const result = await response.json();
-      if (result.tier) {
-        setProfile((prev) => prev ? { ...prev, tier: result.tier } : prev);
-        toast.success(`Upgraded to ${result.tier}!`, { duration: 4000 });
-
-        // Force a full page reload so the navigation bar picks up the new tier
-        window.location.href = '/settings';
-      } else {
-        toast.error('Could not confirm payment');
-      }
-    } catch {
-      toast.error('Could not confirm payment');
+    if (!initialized.current) {
+      initialized.current = true;
+      fetchProfile();
     }
-  };
+  }, []);
 
-  confirmPayment();
-}, [searchParams, profile]);
+  // Handle Stripe checkout session redirect – run once when profile is ready
+  useEffect(() => {
+    const sessionId = searchParams.get('session_id');
+    if (!sessionId || !profile) return; // wait for profile to load
+
+    // Avoid duplicate calls
+    if (confirmedRef.current) return;
+    confirmedRef.current = true;
+
+    const confirmPayment = async () => {
+      try {
+        const response = await fetch('/api/confirm-payment', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sessionId }),
+        });
+        const result = await response.json();
+        if (result.tier) {
+          setProfile((prev) => prev ? { ...prev, tier: result.tier } : prev);
+          toast.success(`Upgraded to ${result.tier}!`, { duration: 4000 });
+          // Force a full page reload so the navigation bar picks up the new tier
+          window.location.href = '/settings';
+        } else {
+          toast.error('Could not confirm payment');
+          // Remove session_id from URL to stop retrying
+          router.replace('/settings');
+        }
+      } catch {
+        toast.error('Could not confirm payment');
+        router.replace('/settings');
+      }
+    };
+
+    confirmPayment();
+  }, [searchParams, profile, router]);
 
   const handleToggleReports = async () => {
     const newValue = !emailReports;
