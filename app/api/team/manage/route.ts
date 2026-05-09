@@ -124,7 +124,10 @@ export async function POST(request: NextRequest) {
         .single();
 
       if (!memberProfile) {
-        return NextResponse.json({ error: 'User not found', canInvite: true }, { status: 404 });
+        return NextResponse.json(
+          { error: 'User not found', canInvite: true },
+          { status: 404 }
+        );
       }
 
       if (memberProfile.team_id) {
@@ -203,46 +206,54 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'You are not the team owner' }, { status: 403 });
       }
 
+      
+      const inviteUrl = `https://pauseapp.space?teamId=${team.id}&email=${encodeURIComponent(memberEmail)}`;
+
       const resendKey = process.env.RESEND_API_KEY;
       if (!resendKey) {
+        console.error('RESEND_API_KEY not set');
         return NextResponse.json({ error: 'Email service not configured' }, { status: 500 });
       }
 
-      try {
-        const inviteUrl = `https://pauseapp.space?teamId=${team.id}&email=${encodeURIComponent(memberEmail)}`;
-        const response = await fetch('https://api.resend.com/emails', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${resendKey}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            from: 'Pause Team <noreply@pauseapp.space>',
-            to: memberEmail,
-            subject: `You've been invited to join a team on Pause`,
-            html: `
-              <div style="max-width:600px;margin:0 auto;font-family:sans-serif">
-                <h2>You've been invited to join a team on Pause</h2>
-                <p>Team: ${team.name}</p>
-                <p>Click the link below to accept the invite and create your account (or sign in if you already have one). After signing in, you'll be automatically added to the team.</p>
-                <a href="${inviteUrl}" style="display:inline-block;background:#0d9488;color:white;padding:12px 24px;border-radius:12px;text-decoration:none;font-weight:bold">Accept Invite</a>
-                <p style="font-size:12px;color:#666;margin-top:20px;">If you didn't expect this, you can safely ignore it.</p>
+      const response = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${resendKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          from: 'Pause Team <noreply@pauseapp.space>',
+          to: memberEmail,
+          subject: `You've been invited to join "${team.name}" on Pause`,
+          html: `
+            <div style="max-width:600px;margin:0 auto;font-family:sans-serif">
+              <div style="background:#0d9488;padding:24px;border-radius:12px 12px 0 0;text-align:center">
+                <h1 style="color:white;margin:0">⏸️ Pause</h1>
               </div>
-            `,
-          }),
-        });
+              <div style="background:white;padding:32px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 12px 12px">
+                <h2 style="color:#1c1917">You've been invited to join "${team.name}"</h2>
+                <p style="color:#57534e;line-height:1.6">
+                  Click the button below to accept the invitation. If you already have a Pause account, you'll be added to the team automatically. If not, you'll create a free account and then join the team.
+                </p>
+                <a href="${inviteUrl}" style="display:inline-block;background:#0d9488;color:white;padding:14px 32px;border-radius:12px;text-decoration:none;font-weight:600;margin:16px 0">
+                  Accept Invitation
+                </a>
+                <p style="color:#a8a29e;font-size:12px;margin-top:24px">
+                  If you didn't expect this invitation, you can safely ignore this email.
+                </p>
+              </div>
+            </div>
+          `,
+        }),
+      });
 
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error('Resend error:', response.status, errorText);
-          return NextResponse.json({ error: 'Failed to send invite email' }, { status: 500 });
-        }
-
-        return NextResponse.json({ success: true });
-      } catch (error) {
-        console.error('Invite error:', error);
-        return NextResponse.json({ error: 'Failed to send invite' }, { status: 500 });
+      if (!response.ok) {
+        const errText = await response.text();
+        console.error('Resend error:', response.status, errText);
+        return NextResponse.json({ error: 'Failed to send invite email' }, { status: 500 });
       }
+
+      return NextResponse.json({ success: true });
     }
 
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
