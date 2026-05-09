@@ -45,6 +45,7 @@ export default function TeamPage() {
   const [isAddingMember, setIsAddingMember] = useState(false);
   const [userTier, setUserTier] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  
 
   const fetchTeam = useCallback(async () => {
     setLoading(true);
@@ -141,13 +142,29 @@ export default function TeamPage() {
       setMembers((prev) => [...prev, { id: '', email: memberEmail }]);
       setMemberEmail('');
       toast.success('Member added');
+    } else if (data.canInvite) {
+      const confirmed = window.confirm('User does not have an account. Send an invite email?');
+      if (confirmed) {
+
+        const invResponse = await fetch('/api/team/manage', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'invite', memberEmail, userId: user?.id }),
+        });
+        const invData = await invResponse.json();
+    
+        if (invData.success) {
+          toast.success('Invite email sent');
+        } else {
+          toast.error(invData.error || 'Failed to send invite');
+        }
+      }
     } else {
       toast.error(data.error || 'Failed');
     }
-  } catch (err) {
+  } catch {
     setIsAddingMember(false);
-    toast.error('Could not reach server. Please try again.');
-    console.error('Add member error:', err);
+    toast.error('Could not reach server');
   }
 };
 

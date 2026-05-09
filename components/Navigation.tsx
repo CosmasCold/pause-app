@@ -56,9 +56,10 @@ export default function Navigation() {
   }, [showUserMenu]);
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    setShowUserMenu(false);
-  };
+  await supabase.auth.signOut();
+  setShowUserMenu(false);
+  window.location.href = '/';
+};
 
   const displayName = profileName || user?.email?.split('@')[0] || '';
 

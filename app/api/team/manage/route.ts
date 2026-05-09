@@ -16,27 +16,27 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Missing userId' }, { status: 400 });
     }
 
-    const { data: profile, error: profileError } = await supabaseAdmin
+    const { data: profile } = await supabaseAdmin
       .from('user_profiles')
       .select('team_id, tier')
       .eq('id', userId)
       .single();
 
-    if (profileError || !profile?.team_id) {
+    if (!profile?.team_id) {
       return NextResponse.json({ team: null, members: [] });
     }
 
-    const { data: team, error: teamError } = await supabaseAdmin
+    const { data: team } = await supabaseAdmin
       .from('teams')
       .select('*')
       .eq('id', profile.team_id)
       .single();
 
-    if (teamError || !team) {
+    if (!team) {
       return NextResponse.json({ team: null, members: [] });
     }
 
-    const { data: members, error: membersError } = await supabaseAdmin
+    const { data: members } = await supabaseAdmin
       .from('user_profiles')
       .select('id, email')
       .eq('team_id', profile.team_id);
@@ -63,13 +63,13 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Team name required' }, { status: 400 });
       }
 
-      const { data: profile, error: profileError } = await supabaseAdmin
+      const { data: profile } = await supabaseAdmin
         .from('user_profiles')
         .select('tier')
         .eq('id', userId)
         .single();
 
-      if (profileError || !profile || profile.tier !== 'team') {
+      if (!profile || profile.tier !== 'team') {
         return NextResponse.json({ error: 'Team tier required' }, { status: 403 });
       }
 
@@ -89,7 +89,6 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Could not create team' }, { status: 500 });
       }
 
-      // Assign creator to the team
       await supabaseAdmin
         .from('user_profiles')
         .update({ team_id: team.id })
@@ -104,14 +103,13 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Missing memberEmail' }, { status: 400 });
       }
 
-      // Find the team owned by this user
-      const { data: team, error: teamError } = await supabaseAdmin
+      const { data: team } = await supabaseAdmin
         .from('teams')
         .select('*')
         .eq('created_by', userId)
         .single();
 
-      if (teamError || !team) {
+      if (!team) {
         return NextResponse.json({ error: 'You are not the team owner' }, { status: 403 });
       }
 
@@ -119,25 +117,23 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'No seats available' }, { status: 400 });
       }
 
-      // Find the member by email
-      const { data: memberProfile, error: memberError } = await supabaseAdmin
+      const { data: memberProfile } = await supabaseAdmin
         .from('user_profiles')
-        .select('id, team_id')
+        .select('id, team_id, tier')
         .eq('email', memberEmail)
         .single();
 
-      if (memberError || !memberProfile) {
-        return NextResponse.json({ error: 'User not found' }, { status: 404 });
+      if (!memberProfile) {
+        return NextResponse.json({ error: 'User not found', canInvite: true }, { status: 404 });
       }
 
       if (memberProfile.team_id) {
         return NextResponse.json({ error: 'User already in a team' }, { status: 400 });
       }
 
-      // Add member to team
       await supabaseAdmin
         .from('user_profiles')
-        .update({ team_id: team.id })
+        .update({ team_id: team.id, tier: 'team' })
         .eq('id', memberProfile.id);
 
       await supabaseAdmin
@@ -154,23 +150,23 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Missing memberEmail' }, { status: 400 });
       }
 
-      const { data: team, error: teamError } = await supabaseAdmin
+      const { data: team } = await supabaseAdmin
         .from('teams')
         .select('*')
         .eq('created_by', userId)
         .single();
 
-      if (teamError || !team) {
+      if (!team) {
         return NextResponse.json({ error: 'Not the team owner' }, { status: 403 });
       }
 
-      const { data: memberProfile, error: memberError } = await supabaseAdmin
+      const { data: memberProfile } = await supabaseAdmin
         .from('user_profiles')
         .select('id, team_id')
         .eq('email', memberEmail)
         .single();
 
-      if (memberError || !memberProfile) {
+      if (!memberProfile) {
         return NextResponse.json({ error: 'Member not found' }, { status: 404 });
       }
 
@@ -178,10 +174,9 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'User is not in this team' }, { status: 400 });
       }
 
-      // Remove member from team
       await supabaseAdmin
         .from('user_profiles')
-        .update({ team_id: null })
+        .update({ team_id: null, tier: 'free' })
         .eq('id', memberProfile.id);
 
       await supabaseAdmin
@@ -192,7 +187,64 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: true });
     }
 
-    // Unknown action
+    // ================== INVITE ==================
+    if (action === 'invite') {
+      if (!memberEmail) {
+        return NextResponse.json({ error: 'Missing memberEmail' }, { status: 400 });
+      }
+
+      const { data: team } = await supabaseAdmin
+        .from('teams')
+        .select('id, name')
+        .eq('created_by', userId)
+        .single();
+
+      if (!team) {
+        return NextResponse.json({ error: 'You are not the team owner' }, { status: 403 });
+      }
+
+      const resendKey = process.env.RESEND_API_KEY;
+      if (!resendKey) {
+        return NextResponse.json({ error: 'Email service not configured' }, { status: 500 });
+      }
+
+      try {
+        const inviteUrl = `https://pauseapp.space?teamId=${team.id}&email=${encodeURIComponent(memberEmail)}`;
+        const response = await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${resendKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            from: 'Pause Team <noreply@pauseapp.space>',
+            to: memberEmail,
+            subject: `You've been invited to join a team on Pause`,
+            html: `
+              <div style="max-width:600px;margin:0 auto;font-family:sans-serif">
+                <h2>You've been invited to join a team on Pause</h2>
+                <p>Team: ${team.name}</p>
+                <p>Click the link below to accept the invite and create your account (or sign in if you already have one). After signing in, you'll be automatically added to the team.</p>
+                <a href="${inviteUrl}" style="display:inline-block;background:#0d9488;color:white;padding:12px 24px;border-radius:12px;text-decoration:none;font-weight:bold">Accept Invite</a>
+                <p style="font-size:12px;color:#666;margin-top:20px;">If you didn't expect this, you can safely ignore it.</p>
+              </div>
+            `,
+          }),
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('Resend error:', response.status, errorText);
+          return NextResponse.json({ error: 'Failed to send invite email' }, { status: 500 });
+        }
+
+        return NextResponse.json({ success: true });
+      } catch (error) {
+        console.error('Invite error:', error);
+        return NextResponse.json({ error: 'Failed to send invite' }, { status: 500 });
+      }
+    }
+
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
   } catch (error) {
     console.error('POST team error:', error);
