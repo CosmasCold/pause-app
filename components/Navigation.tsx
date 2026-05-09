@@ -1,7 +1,7 @@
 // components/Navigation.tsx
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, Suspense } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/lib/supabase';
 import { User as UserIcon, LogOut, History, Settings, Users } from 'lucide-react';
@@ -9,7 +9,6 @@ import AuthModal from './AuthModal';
 import Link from 'next/link';
 import Image from 'next/image';
 import type { User } from '@supabase/supabase-js';
-import { Suspense } from 'react';
 
 export default function Navigation() {
   const [user, setUser] = useState<User | null>(null);
@@ -29,7 +28,7 @@ export default function Navigation() {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Load profile (name, avatar, tier)
+  // Load profile
   useEffect(() => {
     if (!user) return;
     const loadProfile = async () => {
@@ -45,7 +44,7 @@ export default function Navigation() {
     loadProfile();
   }, [user]);
 
-  // Click outside
+  // Click outside to close menu
   useEffect(() => {
     const handle = (e: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
@@ -57,10 +56,10 @@ export default function Navigation() {
   }, [showUserMenu]);
 
   const handleSignOut = async () => {
-  await supabase.auth.signOut();
-  setShowUserMenu(false);
-  window.location.href = '/';
-};
+    await supabase.auth.signOut();
+    setShowUserMenu(false);
+    window.location.href = '/';
+  };
 
   const displayName = profileName || user?.email?.split('@')[0] || '';
 
@@ -68,6 +67,7 @@ export default function Navigation() {
     <>
       <nav className="h-16 fixed top-0 left-0 right-0 z-40 bg-white/85 backdrop-blur-lg border-b border-stone-200/60">
         <div className="max-w-6xl mx-auto px-4 h-full flex items-center justify-between">
+          {/* Left: Logo (Home) */}
           <Link href="/" className="flex items-center gap-2">
             <Image
               src="/logo.png"
@@ -80,6 +80,17 @@ export default function Navigation() {
             <span className="font-playfair text-xl font-bold text-stone-800">Pause</span>
           </Link>
 
+          {/* Center: Blog link */}
+          <div className="hidden md:flex items-center gap-8">
+            <Link
+              href="/blog"
+              className="text-stone-600 hover:text-stone-800 transition-colors font-medium text-sm"
+            >
+              Blog
+            </Link>
+          </div>
+
+          {/* Right: User menu or Sign In */}
           <div className="flex items-center gap-4">
             {user ? (
               <div className="relative" ref={menuRef}>
@@ -167,9 +178,10 @@ export default function Navigation() {
           </div>
         </div>
       </nav>
+
       <Suspense fallback={null}>
-  <AuthModal isOpen={showAuth} onClose={() => setShowAuth(false)} />
-</Suspense>
+        <AuthModal isOpen={showAuth} onClose={() => setShowAuth(false)} />
+      </Suspense>
     </>
   );
 }
