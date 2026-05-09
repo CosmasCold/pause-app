@@ -6,11 +6,6 @@ import { createClient } from '@supabase/supabase-js';
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get('code');
-  let next = requestUrl.searchParams.get('next') ?? '/';
-
-  if (!next.startsWith('/')) {
-    next = '/';
-  }
 
   if (code) {
     const supabase = await createServerClient();
@@ -20,7 +15,7 @@ export async function GET(request: Request) {
       const { data: { user } } = await supabase.auth.getUser();
 
       if (user) {
-        // Upsert user profile
+        // Ensure profile exists
         await supabase
           .from('user_profiles')
           .upsert(
@@ -34,7 +29,7 @@ export async function GET(request: Request) {
             { onConflict: 'id' }
           );
 
-        // Check for team invite
+        // Handle team invite if present
         const teamId = requestUrl.searchParams.get('teamId');
         const inviteEmail = requestUrl.searchParams.get('email');
 
@@ -45,13 +40,11 @@ export async function GET(request: Request) {
             { auth: { autoRefreshToken: false, persistSession: false } }
           );
 
-          // Add user to the team
           await supabaseAdmin
             .from('user_profiles')
             .update({ team_id: teamId, tier: 'team' })
             .eq('id', user.id);
 
-          // Increment seats used
           const { data: team } = await supabaseAdmin
             .from('teams')
             .select('seats_used')
@@ -66,18 +59,9 @@ export async function GET(request: Request) {
           }
         }
       }
-
-      const forwardedHost = request.headers.get('x-forwarded-host');
-      const isLocalEnv = process.env.NODE_ENV === 'development';
-      const redirectUrl = isLocalEnv
-        ? `${requestUrl.origin}${next}`
-        : forwardedHost
-          ? `https://${forwardedHost}${next}`
-          : `${requestUrl.origin}${next}`;
-
-      return NextResponse.redirect(redirectUrl);
     }
   }
 
-  return NextResponse.redirect(`${requestUrl.origin}/auth/auth-code-error`);
+  // Always redirect to home – never to an error page
+  return NextResponse.redirect(requestUrl.origin);
 }
