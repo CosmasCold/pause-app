@@ -47,49 +47,47 @@ export default function TeamPage() {
   const [error, setError] = useState<string | null>(null);
 
   const fetchTeam = useCallback(async () => {
-  setLoading(true);
-  setError(null);
+    setLoading(true);
+    setError(null);
 
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    setLoading(false);
-    return;
-  }
-
-  // Check user's tier
-  const { data: profile } = await supabase
-    .from('user_profiles')
-    .select('tier, team_id')
-    .eq('id', user.id)
-    .single();
-
-  setUserTier(profile?.tier || 'free');
-
-  if (!profile || profile.tier !== 'team') {
-    setLoading(false);
-    return;
-  }
-
-  try {
-    // Pass userId in the query string
-    const response = await fetch(`/api/team/manage?userId=${user.id}`);
-    const data = await response.json();
-    if (!response.ok) {
-      setError(data.error || 'Could not load team');
-    } else {
-      if (data.team) {
-        setTeam(data.team);
-        setMembers(data.members || []);
-      } else {
-        setTeam(null);
-      }
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      setLoading(false);
+      return;
     }
-  } catch {
-    setError('Network error. Please try again.');
-  } finally {
-    setLoading(false);
-  }
-}, []);
+
+    const { data: profile } = await supabase
+      .from('user_profiles')
+      .select('tier, team_id')
+      .eq('id', user.id)
+      .single();
+
+    setUserTier(profile?.tier || 'free');
+
+    if (!profile || profile.tier !== 'team') {
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/team/manage?userId=${user.id}`);
+      const data = await response.json();
+      if (!response.ok) {
+        setError(data.error || 'Could not load team');
+      } else {
+        if (data.team) {
+          setTeam(data.team);
+          setMembers(data.members || []);
+        } else {
+          setTeam(null);
+        }
+      }
+    } catch {
+      setError('Network error. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
     useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -97,42 +95,78 @@ export default function TeamPage() {
   }, [fetchTeam]);
 
   const handleCreateTeam = async () => {
-  if (!teamName.trim()) return;
-  setIsCreating(true);
-  const user = (await supabase.auth.getUser()).data.user;
-  const response = await fetch('/api/team/manage', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ action: 'create', teamName, userId: user?.id }),
-  });
-  // … rest unchanged
-};
+    if (!teamName.trim()) return;
+    setIsCreating(true);
 
-const handleAddMember = async () => {
-  if (!memberEmail.trim()) return;
-  setIsAddingMember(true);
-  const user = (await supabase.auth.getUser()).data.user;
-  const response = await fetch('/api/team/manage', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ action: 'add-member', memberEmail, userId: user?.id }),
-  });
-  // … rest unchanged
-};
+    try {
+      const user = (await supabase.auth.getUser()).data.user;
+      const response = await fetch('/api/team/manage', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'create', teamName, userId: user?.id }),
+      });
+      const data = await response.json();
+      setIsCreating(false);
 
-const handleRemoveMember = async (email: string) => {
-  const user = (await supabase.auth.getUser()).data.user;
-  const response = await fetch('/api/team/manage', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ action: 'remove-member', memberEmail: email, userId: user?.id }),
-  });
-    const data = await response.json();
-    if (data.success) {
-      setMembers((prev) => prev.filter((m) => m.email !== email));
-      toast.success('Member removed');
-    } else {
-      toast.error(data.error || 'Failed');
+      if (data.team) {
+        setTeam(data.team);
+        if (user) {
+          setMembers([{ id: user.id, email: user.email || '' }]);
+        }
+        toast.success('Team created!');
+      } else {
+        toast.error(data.error || 'Failed');
+      }
+    } catch (err) {
+      setIsCreating(false);
+      toast.error('Could not reach server. Please try again.');
+    }
+  };
+
+  const handleAddMember = async () => {
+    if (!memberEmail.trim()) return;
+    setIsAddingMember(true);
+
+    try {
+      const user = (await supabase.auth.getUser()).data.user;
+      const response = await fetch('/api/team/manage', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'add-member', memberEmail, userId: user?.id }),
+      });
+      const data = await response.json();
+      setIsAddingMember(false);
+
+      if (data.success) {
+        setMembers((prev) => [...prev, { id: '', email: memberEmail }]);
+        setMemberEmail('');
+        toast.success('Member added');
+      } else {
+        toast.error(data.error || 'Failed');
+      }
+    } catch {
+      setIsAddingMember(false);
+      toast.error('Could not reach server. Please try again.');
+    }
+  };
+
+  const handleRemoveMember = async (email: string) => {
+    try {
+      const user = (await supabase.auth.getUser()).data.user;
+      const response = await fetch('/api/team/manage', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'remove-member', memberEmail: email, userId: user?.id }),
+      });
+      const data = await response.json();
+      if (!data.success) {
+        toast.error(data.error || 'Failed');
+      } else {
+        setMembers((prev) => prev.filter((m) => m.email !== email));
+        toast.success('Member removed');
+      }
+    } catch {
+      toast.error('Could not reach server. Please try again.');
     }
   };
 
