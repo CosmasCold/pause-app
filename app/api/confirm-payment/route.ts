@@ -1,7 +1,7 @@
 // app/api/confirm-payment/route.ts
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
-import { createClient } from '@/lib/supabase/server';
+import { createClient } from '@supabase/supabase-js';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
@@ -15,59 +15,55 @@ export async function POST(request: Request) {
 
     // 1. Retrieve session from Stripe
     const session = await stripe.checkout.sessions.retrieve(sessionId);
+
     if (!session || session.payment_status !== 'paid') {
       return NextResponse.json({ error: 'Payment not completed' }, { status: 400 });
     }
 
+    // 2. Extract metadata
     const userId = session.metadata?.userId;
     const tier = session.metadata?.tier;
+
     if (!userId || !tier) {
-      console.error('Missing metadata', session.metadata);
+      console.error('Missing metadata in session', session.metadata);
       return NextResponse.json({ error: 'Missing metadata' }, { status: 400 });
     }
 
-    // 2. Perform authenticated update via service client (bypasses RLS)
-    //    or use the server client with cookies – we'll try both.
-    const supabase = await createClient();
+    // 3. Update the user's tier using service‑role (bypasses RLS)
+    const supabaseAdmin = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_KEY!,
+      { auth: { autoRefreshToken: false, persistSession: false } }
+    );
 
-    // Option A: If RLS is blocking, we can use the service key client.
-    // Option B: Use the standard user-authenticated client, but it must be
-    //           actually authenticated. Because this route is called from the
-    //           settings page (browser cookies present), it should work.
-    // We'll do both: first try with the user‑authenticated client,
-    // then fallback to a direct update using service key if needed.
-
-    // Attempt 1: user‑authenticated update
-    const { error, data } = await supabase
+    const { error: updateError } = await supabaseAdmin
       .from('user_profiles')
-      .update({ tier })
-      .eq('id', userId)
-      .select('tier')
-      .single();
+      .upsert(
+        {
+          id: userId,
+          email: session.customer_details?.email || '',
+          tier,
+          analyses_today: 0,
+          last_analysis_date: new Date().toISOString().split('T')[0],
+        },
+        { onConflict: 'id' }
+      );
 
-    // If no row was updated or an error occurred, try upsert
-    if (error || !data) {
-      console.log('Standard update failed, trying upsert');
-      const { error: upsertError, data: upsertData } = await supabase
-        .from('user_profiles')
-        .upsert(
-          { id: userId, email: session.customer_email || '', tier, analyses_today: 0, last_analysis_date: new Date().toISOString().split('T')[0] },
-          { onConflict: 'id' }
-        )
-        .select('tier')
-        .single();
-
-      if (upsertError || !upsertData) {
-        console.error('Upsert failed', upsertError);
-        // Last resort: use service key client (you can add SUPABASE_SERVICE_KEY later)
-        // For now, report failure so we can debug.
-        return NextResponse.json({ error: 'Database update failed' }, { status: 500 });
-      }
-
-      return NextResponse.json({ tier: upsertData.tier });
+    if (updateError) {
+      console.error('Upsert failed:', updateError);
+      return NextResponse.json({ error: 'Database update failed' }, { status: 500 });
     }
 
-    return NextResponse.json({ tier: data.tier });
+    // 4. Verify the tier was actually saved
+    const { data: verify } = await supabaseAdmin
+      .from('user_profiles')
+      .select('tier')
+      .eq('id', userId)
+      .single();
+
+    console.log('Tier updated to:', verify?.tier);
+
+    return NextResponse.json({ tier: verify?.tier || tier });
   } catch (error) {
     console.error('Confirm payment error:', error);
     return NextResponse.json({ error: 'Failed to confirm payment' }, { status: 500 });
