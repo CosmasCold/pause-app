@@ -10,7 +10,7 @@ import Navigation from '@/components/Navigation';
 import toast from 'react-hot-toast';
 
 interface TeamStats {
-  members: { email: string; analyses: number; avgScore: number }[];
+  members: { email: string; name: string; analyses: number; avgScore: number }[];
   totalAnalyses: number;
   averageRegretScore: number;
   topBiases: { type: string; count: number }[];
@@ -183,7 +183,9 @@ export default function DashboardPage() {
               <tbody>
                 {stats.members.map((member, i) => (
                   <tr key={i} className="border-t border-stone-100">
-                    <td className="p-4 text-stone-700">{member.email}</td>
+                    <td className="p-4 text-stone-700">
+                      {member.name || member.email.split('@')[0]}
+                    </td>
                     <td className="p-4 text-stone-700">{member.analyses}</td>
                     <td className="p-4">
                       <span
