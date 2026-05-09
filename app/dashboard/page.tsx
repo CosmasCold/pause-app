@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { motion } from 'framer-motion';
-import { Users, BarChart3, TrendingUp, AlertCircle } from 'lucide-react';
+import { Users, BarChart3, TrendingUp, AlertCircle, ArrowLeft } from 'lucide-react';
 import Navigation from '@/components/Navigation';
 import toast from 'react-hot-toast';
 
@@ -46,51 +46,79 @@ export default function DashboardPage() {
     })();
   }, [router]);
 
+  // ----- Loading view -----
   if (loading) {
     return (
       <>
         <Navigation />
-        <div className="pt-24 text-center">
-          <BarChart3 className="w-8 h-8 animate-spin mx-auto text-teal-600" />
-          <p className="text-stone-500 mt-2">Loading analytics...</p>
-        </div>
+        <main className="pt-24 px-4 max-w-6xl mx-auto">
+          <button
+            onClick={() => router.back()}
+            className="flex items-center gap-2 text-stone-500 hover:text-stone-700 mb-6 transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span className="text-sm font-medium">Back to Team</span>
+          </button>
+          <div className="text-center">
+            <BarChart3 className="w-8 h-8 animate-spin mx-auto text-teal-600" />
+            <p className="text-stone-500 mt-2">Loading analytics...</p>
+          </div>
+        </main>
       </>
     );
   }
 
+  // ----- Upgrade prompt (no stats) -----
   if (!stats) {
     return (
       <>
         <Navigation />
-        <div className="pt-24 text-center max-w-md mx-auto px-4">
-          <AlertCircle className="w-12 h-12 text-amber-500 mx-auto mb-4" />
-          <h2 className="text-2xl font-playfair font-bold text-stone-800 mb-2">
-            Team Plan Required
-          </h2>
-          <p className="text-stone-600 mb-6">
-            The Team Dashboard is exclusively for teams on the Team subscription.
-            Upgrade to unlock analytics for your organization.
-          </p>
-          <a
-            href="/pricing"
-            className="inline-block bg-teal-500 text-white px-6 py-3 rounded-2xl font-medium hover:bg-teal-600"
+        <main className="pt-24 px-4 max-w-6xl mx-auto">
+          <button
+            onClick={() => router.back()}
+            className="flex items-center gap-2 text-stone-500 hover:text-stone-700 mb-6 transition-colors"
           >
-            View Plans
-          </a>
-        </div>
+            <ArrowLeft className="w-4 h-4" />
+            <span className="text-sm font-medium">Back to Team</span>
+          </button>
+          <div className="text-center max-w-md mx-auto">
+            <AlertCircle className="w-12 h-12 text-amber-500 mx-auto mb-4" />
+            <h2 className="text-2xl font-playfair font-bold text-stone-800 mb-2">
+              Team Plan Required
+            </h2>
+            <p className="text-stone-600 mb-6">
+              The Team Dashboard is exclusively for teams on the Team subscription.
+              Upgrade to unlock analytics for your organization.
+            </p>
+            <a
+              href="/pricing"
+              className="inline-block bg-teal-500 text-white px-6 py-3 rounded-2xl font-medium hover:bg-teal-600"
+            >
+              View Plans
+            </a>
+          </div>
+        </main>
       </>
     );
   }
 
+  // ----- Dashboard with analytics -----
   return (
     <>
       <Navigation />
       <main className="pt-24 pb-16 px-4 max-w-6xl mx-auto">
+        <button
+          onClick={() => router.back()}
+          className="flex items-center gap-2 text-stone-500 hover:text-stone-700 mb-6 transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span className="text-sm font-medium">Back to Team</span>
+        </button>
+
         <h1 className="text-4xl font-playfair font-bold text-stone-800 mb-8">
           Team Dashboard
         </h1>
 
-        {/* KPI Cards */}
         <div className="grid md:grid-cols-3 gap-6 mb-12">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -123,7 +151,6 @@ export default function DashboardPage() {
           </motion.div>
         </div>
 
-        {/* Top Biases */}
         {stats.topBiases.length > 0 && (
           <div className="mb-12">
             <h2 className="text-2xl font-playfair font-bold text-stone-800 mb-4">
@@ -140,7 +167,6 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {/* Member breakdown */}
         <div>
           <h2 className="text-2xl font-playfair font-bold text-stone-800 mb-4">
             Member Activity
