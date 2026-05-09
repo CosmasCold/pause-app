@@ -47,12 +47,12 @@ export async function GET(request: Request) {
     }
 
     // Get team members
-    const { data: members, error: membersError } = await supabaseAdmin
-      .from('user_profiles')
-      .select('id, email')
-      .eq('team_id', profile.team_id);
+      const { data: members, error: _membersError } = await supabaseAdmin
+    .from('user_profiles')
+    .select('id, email, name')
+    .eq('team_id', profile.team_id);
 
-    if (membersError) {
+    if (_membersError) {
       return NextResponse.json({ error: 'Failed to fetch team members' }, { status: 500 });
     }
 
@@ -92,19 +92,19 @@ export async function GET(request: Request) {
       .map(([type, count]) => ({ type, count }));
 
     const memberStats = (members || []).map((member) => {
-      const memberAnalyses = analysesList.filter((a) => a.user_id === member.id);
-      return {
-        email: member.email,
-        analyses: memberAnalyses.length,
-        avgScore:
-          memberAnalyses.length > 0
-            ? Math.round(
-                memberAnalyses.reduce((sum, a) => sum + a.regret_score, 0) /
-                  memberAnalyses.length
-              )
-            : 0,
-      };
-    });
+  const memberAnalyses = analysesList.filter((a) => a.user_id === member.id);
+  return {
+    email: member.email,     // keep for unique identification if needed
+    name: member.name || member.email.split('@')[0],   // fallback to email prefix
+    analyses: memberAnalyses.length,
+    avgScore: memberAnalyses.length > 0
+      ? Math.round(
+          memberAnalyses.reduce((sum, a) => sum + a.regret_score, 0) /
+            memberAnalyses.length
+        )
+      : 0,
+  };
+});
 
     return NextResponse.json({
       members: memberStats,
