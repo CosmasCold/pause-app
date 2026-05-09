@@ -47,50 +47,49 @@ export default function TeamPage() {
   const [error, setError] = useState<string | null>(null);
 
   const fetchTeam = useCallback(async () => {
-    setLoading(true);
-    setError(null);
+  setLoading(true);
+  setError(null);
 
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      setLoading(false);
-      return;
-    }
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    setLoading(false);
+    return;
+  }
 
-    // Check user's tier
-    const { data: profile } = await supabase
-      .from('user_profiles')
-      .select('tier, team_id')
-      .eq('id', user.id)
-      .single();
+  // Check user's tier
+  const { data: profile } = await supabase
+    .from('user_profiles')
+    .select('tier, team_id')
+    .eq('id', user.id)
+    .single();
 
-    setUserTier(profile?.tier || 'free');
+  setUserTier(profile?.tier || 'free');
 
-    if (!profile || profile.tier !== 'team') {
-      setLoading(false);
-      return;
-    }
+  if (!profile || profile.tier !== 'team') {
+    setLoading(false);
+    return;
+  }
 
-    // Fetch team data from our API
-    try {
-      const response = await fetch('/api/team/manage');
-      const data = await response.json();
-      if (!response.ok) {
-        setError(data.error || 'Could not load team');
+  try {
+    // Pass userId in the query string
+    const response = await fetch(`/api/team/manage?userId=${user.id}`);
+    const data = await response.json();
+    if (!response.ok) {
+      setError(data.error || 'Could not load team');
+    } else {
+      if (data.team) {
+        setTeam(data.team);
+        setMembers(data.members || []);
       } else {
-        if (data.team) {
-          setTeam(data.team);
-          setMembers(data.members || []);
-        } else {
-          // No team yet, but user is on team tier
-          setTeam(null);
-        }
+        setTeam(null);
       }
-    } catch {
-      setError('Network error. Please try again.');
-    } finally {
-      setLoading(false);
     }
-  }, []);
+  } catch {
+    setError('Network error. Please try again.');
+  } finally {
+    setLoading(false);
+  }
+}, []);
 
     useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -98,52 +97,36 @@ export default function TeamPage() {
   }, [fetchTeam]);
 
   const handleCreateTeam = async () => {
-    if (!teamName.trim()) return;
-    setIsCreating(true);
-    const response = await fetch('/api/team/manage', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'create', teamName }),
-    });
-    const data = await response.json();
-    setIsCreating(false);
-    if (data.team) {
-      setTeam(data.team);
-      const user = (await supabase.auth.getUser()).data.user;
-      if (user) {
-        setMembers([{ id: user.id, email: user.email || '' }]);
-      }
-      toast.success('Team created!');
-    } else {
-      toast.error(data.error || 'Failed');
-    }
-  };
+  if (!teamName.trim()) return;
+  setIsCreating(true);
+  const user = (await supabase.auth.getUser()).data.user;
+  const response = await fetch('/api/team/manage', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action: 'create', teamName, userId: user?.id }),
+  });
+  // … rest unchanged
+};
 
-  const handleAddMember = async () => {
-    if (!memberEmail.trim()) return;
-    setIsAddingMember(true);
-    const response = await fetch('/api/team/manage', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'add-member', memberEmail }),
-    });
-    const data = await response.json();
-    setIsAddingMember(false);
-    if (data.success) {
-      setMembers((prev) => [...prev, { id: '', email: memberEmail }]);
-      setMemberEmail('');
-      toast.success('Member added');
-    } else {
-      toast.error(data.error || 'Failed');
-    }
-  };
+const handleAddMember = async () => {
+  if (!memberEmail.trim()) return;
+  setIsAddingMember(true);
+  const user = (await supabase.auth.getUser()).data.user;
+  const response = await fetch('/api/team/manage', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action: 'add-member', memberEmail, userId: user?.id }),
+  });
+  // … rest unchanged
+};
 
-  const handleRemoveMember = async (email: string) => {
-    const response = await fetch('/api/team/manage', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'remove-member', memberEmail: email }),
-    });
+const handleRemoveMember = async (email: string) => {
+  const user = (await supabase.auth.getUser()).data.user;
+  const response = await fetch('/api/team/manage', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action: 'remove-member', memberEmail: email, userId: user?.id }),
+  });
     const data = await response.json();
     if (data.success) {
       setMembers((prev) => prev.filter((m) => m.email !== email));

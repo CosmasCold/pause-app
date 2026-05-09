@@ -1,28 +1,25 @@
 // app/api/team/manage/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { createClient as createServerClient } from '@/lib/supabase/server';
 
-// Service‑role client that bypasses RLS
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_KEY!,
   { auth: { autoRefreshToken: false, persistSession: false } }
 );
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const supabase = await createServerClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const { searchParams } = new URL(request.url);
+    const userId = searchParams.get('userId');
+    if (!userId) {
+      return NextResponse.json({ error: 'Missing userId' }, { status: 400 });
     }
 
-    // Use admin client for all database queries
     const { data: profile } = await supabaseAdmin
       .from('user_profiles')
       .select('team_id, tier')
-      .eq('id', user.id)
+      .eq('id', userId)
       .single();
 
     if (!profile?.team_id) {
@@ -49,22 +46,18 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createServerClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const { action, teamName, memberEmail, userId } = await request.json();
+    if (!userId) {
+      return NextResponse.json({ error: 'Missing userId' }, { status: 400 });
     }
-
-    const { action, teamName, memberEmail } = await request.json();
 
     if (action === 'create') {
       if (!teamName) return NextResponse.json({ error: 'Team name required' }, { status: 400 });
 
-      // Verify tier using admin client
       const { data: profile } = await supabaseAdmin
         .from('user_profiles')
         .select('tier')
-        .eq('id', user.id)
+        .eq('id', userId)
         .single();
 
       if (!profile || profile.tier !== 'team') {
@@ -73,7 +66,7 @@ export async function POST(request: NextRequest) {
 
       const { data: team, error } = await supabaseAdmin
         .from('teams')
-        .insert({ name: teamName, created_by: user.id, seats_total: 10, seats_used: 1 })
+        .insert({ name: teamName, created_by: userId, seats_total: 10, seats_used: 1 })
         .select()
         .single();
 
@@ -82,7 +75,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Could not create team' }, { status: 500 });
       }
 
-      await supabaseAdmin.from('user_profiles').update({ team_id: team.id }).eq('id', user.id);
+      await supabaseAdmin.from('user_profiles').update({ team_id: team.id }).eq('id', userId);
 
       return NextResponse.json({ team });
     }
@@ -91,7 +84,7 @@ export async function POST(request: NextRequest) {
       const { data: team } = await supabaseAdmin
         .from('teams')
         .select('*')
-        .eq('created_by', user.id)
+        .eq('created_by', userId)
         .single();
 
       if (!team) return NextResponse.json({ error: 'You are not the team owner' }, { status: 403 });
@@ -116,7 +109,7 @@ export async function POST(request: NextRequest) {
       const { data: team } = await supabaseAdmin
         .from('teams')
         .select('*')
-        .eq('created_by', user.id)
+        .eq('created_by', userId)
         .single();
 
       if (!team) return NextResponse.json({ error: 'Not the team owner' }, { status: 403 });
