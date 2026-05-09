@@ -44,16 +44,19 @@ export default function TeamPage() {
   const [isCreating, setIsCreating] = useState(false);
   const [isAddingMember, setIsAddingMember] = useState(false);
   const [userTier, setUserTier] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchTeam = useCallback(async () => {
     setLoading(true);
+    setError(null);
+
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       setLoading(false);
       return;
     }
 
-    // Check user's tier first
+    // Check user's tier
     const { data: profile } = await supabase
       .from('user_profiles')
       .select('tier, team_id')
@@ -67,20 +70,32 @@ export default function TeamPage() {
       return;
     }
 
-    // Only fetch team data if on team tier
-    const response = await fetch('/api/team/manage');
-    const data = await response.json();
-    if (data.team) {
-      setTeam(data.team);
-      setMembers(data.members || []);
+    // Fetch team data from our API
+    try {
+      const response = await fetch('/api/team/manage');
+      const data = await response.json();
+      if (!response.ok) {
+        setError(data.error || 'Could not load team');
+      } else {
+        if (data.team) {
+          setTeam(data.team);
+          setMembers(data.members || []);
+        } else {
+          // No team yet, but user is on team tier
+          setTeam(null);
+        }
+      }
+    } catch {
+      setError('Network error. Please try again.');
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }, []);
 
-  useEffect(() => {
-  // eslint-disable-next-line react-hooks/set-state-in-effect
-  fetchTeam();
-}, [fetchTeam]);
+    useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchTeam();
+  }, [fetchTeam]);
 
   const handleCreateTeam = async () => {
     if (!teamName.trim()) return;
@@ -151,7 +166,27 @@ export default function TeamPage() {
     );
   }
 
-  // Not on team tier – show upgrade prompt
+  // Error state
+  if (error) {
+    return (
+      <>
+        <Navigation />
+        <div className="pt-24 text-center max-w-md mx-auto px-4">
+          <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+          <h2 className="text-2xl font-playfair font-bold text-stone-800 mb-2">Something went wrong</h2>
+          <p className="text-stone-600 mb-6">{error}</p>
+          <button
+            onClick={fetchTeam}
+            className="bg-teal-500 text-white px-4 py-2 rounded-2xl font-medium hover:bg-teal-600"
+          >
+            Try Again
+          </button>
+        </div>
+      </>
+    );
+  }
+
+  // Not on team tier
   if (userTier && userTier !== 'team') {
     return (
       <>
