@@ -207,7 +207,7 @@ export async function POST(request: NextRequest) {
       }
 
       
-      const inviteUrl = `https://pauseapp.space?teamId=${team.id}&email=${encodeURIComponent(memberEmail)}`;
+      const inviteUrl = `https://pauseapp.space/?teamId=${team.id}&email=${encodeURIComponent(memberEmail)}`;
 
       const resendKey = process.env.RESEND_API_KEY;
       if (!resendKey) {
