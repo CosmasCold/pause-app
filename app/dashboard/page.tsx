@@ -23,34 +23,25 @@ export default function DashboardPage() {
 
   useEffect(() => {
     (async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         router.push('/');
         return;
       }
 
-      // Check tier
-      const { data: profile } = await supabase
-        .from('user_profiles')
-        .select('tier')
-        .eq('id', user.id)
-        .single();
-
-      if (!profile || profile.tier !== 'team') {
+      const response = await fetch(`/api/team/analytics?userId=${user.id}`);
+      if (response.status === 403) {
         toast.error('Team dashboard requires a Team subscription.');
         setLoading(false);
         return;
       }
-
-      const response = await fetch('/api/team/analytics');
-      if (response.ok) {
-        const data = await response.json();
-        setStats(data);
-      } else {
+      if (!response.ok) {
         toast.error('Could not load analytics.');
+        setLoading(false);
+        return;
       }
+      const data = await response.json();
+      setStats(data);
       setLoading(false);
     })();
   }, [router]);

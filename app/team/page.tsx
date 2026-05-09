@@ -117,38 +117,39 @@ export default function TeamPage() {
       } else {
         toast.error(data.error || 'Failed');
       }
-    } catch (err) {
+    } catch {
       setIsCreating(false);
       toast.error('Could not reach server. Please try again.');
     }
   };
 
   const handleAddMember = async () => {
-    if (!memberEmail.trim()) return;
-    setIsAddingMember(true);
+  if (!memberEmail.trim()) return;
+  setIsAddingMember(true);
 
-    try {
-      const user = (await supabase.auth.getUser()).data.user;
-      const response = await fetch('/api/team/manage', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'add-member', memberEmail, userId: user?.id }),
-      });
-      const data = await response.json();
-      setIsAddingMember(false);
+  try {
+    const user = (await supabase.auth.getUser()).data.user;
+    const response = await fetch('/api/team/manage', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'add-member', memberEmail, userId: user?.id }),
+    });
+    const data = await response.json();
+    setIsAddingMember(false);
 
-      if (data.success) {
-        setMembers((prev) => [...prev, { id: '', email: memberEmail }]);
-        setMemberEmail('');
-        toast.success('Member added');
-      } else {
-        toast.error(data.error || 'Failed');
-      }
-    } catch {
-      setIsAddingMember(false);
-      toast.error('Could not reach server. Please try again.');
+    if (data.success) {
+      setMembers((prev) => [...prev, { id: '', email: memberEmail }]);
+      setMemberEmail('');
+      toast.success('Member added');
+    } else {
+      toast.error(data.error || 'Failed');
     }
-  };
+  } catch (err) {
+    setIsAddingMember(false);
+    toast.error('Could not reach server. Please try again.');
+    console.error('Add member error:', err);
+  }
+};
 
   const handleRemoveMember = async (email: string) => {
     try {
