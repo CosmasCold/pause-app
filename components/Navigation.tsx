@@ -9,6 +9,7 @@ import AuthModal from './AuthModal';
 import Link from 'next/link';
 import Image from 'next/image';
 import type { User } from '@supabase/supabase-js';
+import { Suspense } from 'react';
 
 export default function Navigation() {
   const [user, setUser] = useState<User | null>(null);
@@ -166,7 +167,9 @@ export default function Navigation() {
           </div>
         </div>
       </nav>
-      <AuthModal isOpen={showAuth} onClose={() => setShowAuth(false)} />
+      <Suspense fallback={null}>
+  <AuthModal isOpen={showAuth} onClose={() => setShowAuth(false)} />
+</Suspense>
     </>
   );
 }
