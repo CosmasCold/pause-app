@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
                     Until then, you can try Pause for free at <a href="https://pauseapp.space" style="color:#0d9488">pauseapp.space</a>.
                   </p>
                   <p style="color:#a8a29e;font-size:12px;margin-top:24px">
-                    If you no longer want these emails, you can <a href="https://pauseapp.space/settings?unsubscribe=true" style="color:#a8a29e">unsubscribe here</a>.
+                    If you no longer want these emails, you can <a href="https://pauseapp.space/unsubscribe?email=${encodeURIComponent(email)}">unsubscribe here</a>
                   </p>
                 </div>
               </div>

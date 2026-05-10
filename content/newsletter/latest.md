@@ -19,4 +19,4 @@ Every week, I share one practical tip to help you write clearer, kinder messages
 **Try Pause for free → [pauseapp.space](https://pauseapp.space)**
 
 You're receiving this because you subscribed to the Pause Weekly newsletter.  
-[Unsubscribe](https://pauseapp.space/settings?unsubscribe=true)
+[Unsubscribe](https://pauseapp.space/unsubscribe?email=${encodeURIComponent(email)})
