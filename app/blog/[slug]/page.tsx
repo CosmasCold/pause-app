@@ -1,15 +1,17 @@
 // app/blog/[slug]/page.tsx
 import { notFound } from 'next/navigation';
-import { articles } from '../articles';
+import { articles, Article } from '../articles';
 import Navigation from '@/components/Navigation';
 import Link from 'next/link';
 
-export async function generateStaticParams() {
-  return articles.map((article) => ({ slug: article.slug }));
+export const dynamic = 'force-static';
+
+export function generateStaticParams() {
+  return articles.map((article: Article) => ({ slug: article.slug }));
 }
 
 export default function ArticlePage({ params }: { params: { slug: string } }) {
-  const article = articles.find((a) => a.slug === params.slug);
+  const article = articles.find((a: Article) => a.slug === params.slug);
   if (!article) return notFound();
 
   return (
@@ -20,7 +22,9 @@ export default function ArticlePage({ params }: { params: { slug: string } }) {
           ← Back to Insights
         </Link>
         <article>
-          <h1 className="text-4xl font-playfair font-bold text-stone-800 mb-4">{article.title}</h1>
+          <h1 className="text-4xl font-playfair font-bold text-stone-800 mb-4">
+            {article.title}
+          </h1>
           <p className="text-stone-400 text-sm mb-8">
             {new Date(article.date).toLocaleDateString('en-US', {
               year: 'numeric',
