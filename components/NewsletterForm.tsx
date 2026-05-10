@@ -1,4 +1,3 @@
-// components/NewsletterForm.tsx
 'use client';
 
 import { useState } from 'react';
@@ -17,7 +16,6 @@ export default function NewsletterForm() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
       });
-      await res.json();  // we only need to check res.ok
       if (res.ok) {
         setStatus('success');
         setEmail('');
@@ -40,19 +38,22 @@ export default function NewsletterForm() {
       {status === 'success' ? (
         <p className="text-teal-600 font-medium">Thanks for subscribing!</p>
       ) : (
-        <form onSubmit={handleSubmit} className="flex gap-2 justify-center">
+        <form
+          onSubmit={handleSubmit}
+          className="flex flex-wrap gap-2 justify-center items-center"
+        >
           <input
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="you@example.com"
             required
-            className="flex-1 max-w-xs px-4 py-3 border-2 border-stone-200 rounded-2xl focus:outline-none focus:border-teal-500 text-stone-700"
+            className="flex-1 min-w-[200px] max-w-xs px-4 py-3 border-2 border-stone-200 rounded-2xl focus:outline-none focus:border-teal-500 text-stone-700 text-sm"
           />
           <button
             type="submit"
             disabled={status === 'loading'}
-            className="bg-teal-500 text-white px-5 py-3 rounded-2xl font-medium hover:bg-teal-600 transition-colors disabled:opacity-50"
+            className="bg-teal-500 text-white px-5 py-3 rounded-2xl font-medium hover:bg-teal-600 transition-colors disabled:opacity-50 text-sm whitespace-nowrap"
           >
             {status === 'loading' ? 'Sending...' : 'Subscribe'}
           </button>
