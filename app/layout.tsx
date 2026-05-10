@@ -7,6 +7,7 @@ import Link from 'next/link';
 
 <head>
   <link rel="icon" type="image/png" href="/icon.png" />
+  <meta name="google-site-verification" content="CA6P_Ot-bfagJ0OuImO_OnVuZ6JrQNZx3s6Lj51PSdQ" />
 </head>
 
 const inter = Inter({
