@@ -19,6 +19,18 @@ export const metadata: Metadata = {
   title: 'Pause — The space between feeling and sending',
   description:
     'Check your writing for cognitive biases and emotional tone before you send.',
+  openGraph: {
+    title: 'Pause — The space between feeling and sending',
+    description:
+      'Check your writing for cognitive biases and emotional tone before you send.',
+    images: [
+      {
+        url: '/logo.png',
+        width: 512,
+        height: 512,
+      },
+    ],
+  },
 };
 
 export default function RootLayout({

@@ -1,6 +1,19 @@
 // app/blog/page.tsx
+import type { Metadata } from 'next';
 import Navigation from '@/components/Navigation';
 import Link from 'next/link';
+
+export const metadata: Metadata = {
+  title: 'Insights – Pause',
+  description:
+    'Read our latest articles on communication, cognitive biases, and how to write clearer, kinder messages.',
+  openGraph: {
+    title: 'Insights – Pause',
+    description:
+      'Read our latest articles on communication, cognitive biases, and how to write clearer, kinder messages.',
+    images: [{ url: '/logo.png', width: 512, height: 512 }],
+  },
+};
 
 const posts = [
   {
