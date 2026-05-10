@@ -14,7 +14,6 @@ import {
   BarChart3,
   Settings,
   Mail,
-  Shield,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import toast from 'react-hot-toast';
@@ -135,7 +134,6 @@ export default function TeamPage() {
     try {
       const user = (await supabase.auth.getUser()).data.user;
 
-      // 1) Try adding as existing member
       const addResponse = await fetch('/api/team/manage', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -151,7 +149,6 @@ export default function TeamPage() {
         return;
       }
 
-      // 2) User doesn't exist – send invite immediately
       if (addData.canInvite) {
         toast.loading('Sending invitation…', { duration: 2000 });
         const invResponse = await fetch('/api/team/manage', {
@@ -171,7 +168,6 @@ export default function TeamPage() {
         return;
       }
 
-      // 3) Some other error
       setIsAddingMember(false);
       toast.error(addData.error || 'Failed');
     } catch {
@@ -275,7 +271,7 @@ export default function TeamPage() {
                 <Users className="w-8 h-8 text-teal-600" />
               </div>
               <h1 className="text-2xl font-playfair font-bold text-stone-800 mb-2">Create Your Team</h1>
-              <p className="text-stone-600 text-sm">You're on the Team plan. Set up your team to start collaborating.</p>
+              <p className="text-stone-600 text-sm">You&apos;re on the Team plan. Set up your team to start collaborating.</p>
             </div>
             <div className="space-y-4">
               <label className="block text-sm font-medium text-stone-700">Team Name</label>
@@ -301,7 +297,7 @@ export default function TeamPage() {
 
         {/* Team header */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-white/90 rounded-3xl p-8 shadow-xl shadow-stone-300/40 border border-stone-300/50 mb-6">
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
             <div>
               <h1 className="text-3xl font-playfair font-bold text-stone-800">{team.name}</h1>
               <div className="flex items-center gap-2 mt-2 text-stone-500 text-sm">
@@ -312,11 +308,11 @@ export default function TeamPage() {
               </div>
             </div>
             <div className="flex gap-3">
-              <Link href="/dashboard" className="flex items-center gap-2 bg-teal-500 text-white px-4 py-2 rounded-2xl font-medium hover:bg-teal-600 transition-colors text-sm">
+              <Link href="/dashboard" className="flex items-center gap-2 bg-teal-500 text-white px-4 py-2 rounded-2xl font-medium hover:bg-teal-600 transition-colors text-sm whitespace-nowrap">
                 <BarChart3 className="w-4 h-4" /> Dashboard
               </Link>
               {isOwner && (
-                <Link href="/settings" className="flex items-center gap-2 bg-stone-100 text-stone-700 px-4 py-2 rounded-2xl font-medium hover:bg-stone-200 transition-colors text-sm">
+                <Link href="/settings" className="flex items-center gap-2 bg-stone-100 text-stone-700 px-4 py-2 rounded-2xl font-medium hover:bg-stone-200 transition-colors text-sm whitespace-nowrap">
                   <Settings className="w-4 h-4" /> Settings
                 </Link>
               )}
@@ -335,12 +331,12 @@ export default function TeamPage() {
                 <Mail className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-stone-400" />
                 <input type="email" placeholder="colleague@example.com" value={memberEmail} onChange={(e) => setMemberEmail(e.target.value)} className="w-full pl-10 pr-4 py-3 border-2 border-stone-200 rounded-2xl focus:outline-none focus:border-teal-500 text-stone-700" />
               </div>
-              <button onClick={handleAddOrInvite} disabled={isAddingMember || !memberEmail.trim()} className="bg-teal-500 text-white px-6 py-3 rounded-2xl font-medium hover:bg-teal-600 disabled:opacity-50 transition-colors">
+              <button onClick={handleAddOrInvite} disabled={isAddingMember || !memberEmail.trim()} className="bg-teal-500 text-white px-6 py-3 rounded-2xl font-medium hover:bg-teal-600 disabled:opacity-50 transition-colors whitespace-nowrap">
                 {isAddingMember ? 'Adding...' : 'Add'}
               </button>
             </div>
             <p className="text-xs text-stone-400 mt-3">
-              Enter an email address. If they already have a Pause account, they'll be added immediately. If not, we'll send them an invitation.
+              Enter an email address. If they already have a Pause account, they&apos;ll be added immediately. If not, we&apos;ll send them an invitation.
             </p>
           </motion.div>
         )}
