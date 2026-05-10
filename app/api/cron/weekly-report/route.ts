@@ -1,6 +1,13 @@
 // app/api/cron/weekly-report/route.ts
 import { NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createClient } from '@supabase/supabase-js';
+
+// Service‑role client – bypasses RLS, safe for cron jobs
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_KEY!,
+  { auth: { autoRefreshToken: false, persistSession: false } }
+);
 
 interface SavedAnalysis {
   id: string;
@@ -24,13 +31,12 @@ interface WeeklyReport {
 
 export async function GET() {
   try {
-    const supabase = await createClient();
-
-    const { data: users } = await supabase
+    // Use admin client – no RLS issues
+    const { data: users } = await supabaseAdmin
       .from('user_profiles')
       .select('id, email')
       .eq('email_reports', true)
-      .neq('tier', 'free');   // exclude free users
+      .neq('tier', 'free');   // only Pro & Team
 
     if (!users || users.length === 0) {
       return NextResponse.json({ message: 'No users subscribed to reports' });
@@ -38,7 +44,7 @@ export async function GET() {
 
     const results = await Promise.allSettled(
       users.map(async (user) => {
-        const report = await generateWeeklyReport(supabase, user.id);
+        const report = await generateWeeklyReport(user.id);
         if (!report) return { email: user.email, success: false, reason: 'No analyses' };
 
         if (process.env.RESEND_API_KEY) {
@@ -49,7 +55,7 @@ export async function GET() {
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-             from: 'Pause <noreply@pauseapp.space>',
+              from: 'Pause <noreply@pauseapp.space>',
               to: user.email,
               subject: `Your Weekly Pause Report – ${report.averageRegretScore}% regret probability`,
               html: buildEmailHtml(user.email.split('@')[0], report),
@@ -73,14 +79,11 @@ export async function GET() {
   }
 }
 
-async function generateWeeklyReport(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-  userId: string
-): Promise<WeeklyReport | null> {
+async function generateWeeklyReport(userId: string): Promise<WeeklyReport | null> {
   const weekStart = new Date();
   weekStart.setDate(weekStart.getDate() - 7);
 
-  const { data: thisWeek } = await supabase
+  const { data: thisWeek } = await supabaseAdmin
     .from('saved_analyses')
     .select('*')
     .eq('user_id', userId)
@@ -134,7 +137,7 @@ function buildEmailHtml(name: string, report: WeeklyReport) {
   return `
     <div style="max-width:600px;margin:0 auto;font-family:sans-serif">
       <h2>Your Weekly Pause Report</h2>
-      <p>Hi ${name}, here's your communication recap.</p>
+      <p>Hi ${name}, here's your communication recap for the past week.</p>
       <table style="width:100%;border-collapse:collapse;margin:20px 0">
         <tr>
           <td style="padding:12px;background:#f5f5f4;border-radius:8px;text-align:center">
