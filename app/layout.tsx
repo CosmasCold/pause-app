@@ -5,11 +5,6 @@ import { Toaster } from 'react-hot-toast';
 import Navigation from '@/components/Navigation';
 import Link from 'next/link';
 
-<head>
-  <link rel="icon" type="image/png" href="/icon.png" />
-  <meta name="google-site-verification" content="CA6P_Ot-bfagJ0OuImO_OnVuZ6JrQNZx3s6Lj51PSdQ" />
-</head>
-
 const inter = Inter({
   subsets: ['latin'],
   variable: '--font-inter',
@@ -45,6 +40,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={`${inter.variable} ${playfair.variable}`}>
+      <head>
+        <meta name="google-site-verification" content="CA6P_Ot-bfagJ0OuImO_OnVuZ6JrQNZx3s6Lj51PSdQ" />
+      </head>
       <body
         className="min-h-screen text-stone-700"
         style={{
