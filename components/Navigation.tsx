@@ -80,18 +80,16 @@ export default function Navigation() {
             <span className="font-playfair text-xl font-bold text-stone-800">Pause</span>
           </Link>
 
-          {/* Center: Blog link */}
-          <div className="hidden md:flex items-center gap-8">
+          {/* Center/Right: Insights link – always visible */}
+          <div className="flex items-center gap-2 sm:gap-4">
             <Link
               href="/blog"
-              className="text-stone-600 hover:text-stone-800 transition-colors font-medium text-sm"
+              className="text-stone-600 hover:text-stone-800 transition-colors font-medium text-sm sm:text-base"
             >
-              Blog
+              Insights
             </Link>
-          </div>
 
-          {/* Right: User menu or Sign In */}
-          <div className="flex items-center gap-4">
+            {/* Right: User menu or Sign In */}
             {user ? (
               <div className="relative" ref={menuRef}>
                 <button
@@ -112,7 +110,7 @@ export default function Navigation() {
                       <UserIcon className="w-4 h-4 text-teal-600" />
                     )}
                   </div>
-                  <span className="text-sm font-medium text-stone-700">
+                  <span className="text-sm font-medium text-stone-700 hidden sm:inline">
                     {displayName}
                   </span>
                 </button>
@@ -170,7 +168,7 @@ export default function Navigation() {
             ) : (
               <button
                 onClick={() => setShowAuth(true)}
-                className="bg-teal-500 text-white px-5 py-2.5 rounded-2xl font-medium hover:bg-teal-600 transition-colors shadow-lg shadow-teal-200/30"
+                className="bg-teal-500 text-white px-4 py-2 sm:px-5 sm:py-2.5 rounded-2xl font-medium hover:bg-teal-600 transition-colors shadow-lg shadow-teal-200/30 text-sm"
               >
                 Sign In
               </button>
