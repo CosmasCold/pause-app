@@ -347,7 +347,7 @@ if (!user) {
           </p>
           {/* Placeholder for demo GIF or video */}
           <div className="bg-stone-100 rounded-2xl p-10 text-stone-400 text-sm">
-            [ Demo GIF or screenshot goes here – replace this with an actual image ]
+            <img src="/demo.gif" alt="Pause in action" className="w-full h-auto rounded-2xl" />
           </div>
         </motion.div>
       </section>
