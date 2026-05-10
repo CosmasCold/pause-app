@@ -114,6 +114,26 @@ function SettingsContent() {
   confirmPayment();
 }, [searchParams, profile, router]);
 
+useEffect(() => {
+  const shouldUnsubscribe = searchParams.get('unsubscribe');
+  if (shouldUnsubscribe === 'true' && profile?.email_reports) {
+    const doUnsubscribe = async () => {
+      const { error } = await supabase
+        .from('user_profiles')
+        .update({ email_reports: false })
+        .eq('id', (await supabase.auth.getUser()).data.user?.id);
+
+      if (!error) {
+        setEmailReports(false);
+        toast.success('You have been unsubscribed.');
+      } else {
+        toast.error('Failed to unsubscribe');
+      }
+    };
+    doUnsubscribe();
+  }
+}, [searchParams, profile]);
+
   const handleToggleReports = async () => {
     const newValue = !emailReports;
     setEmailReports(newValue);
