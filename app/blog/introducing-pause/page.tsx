@@ -1,5 +1,18 @@
 import Navigation from '@/components/Navigation';
 import Link from 'next/link';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Introducing Pause: The AI‑Powered Communication Coach for Your Inbox',
+  description:
+    'Meet the AI that catches emotional tone, hidden assumptions, and regret‑triggering language before you hit send. Built to make your digital communications clearer, kinder, and more effective.',
+  openGraph: {
+    title: 'Introducing Pause: The AI‑Powered Communication Coach for Your Inbox',
+    description:
+      'Meet the AI that catches emotional tone, hidden assumptions, and regret‑triggering language before you hit send. Built to make your digital communications clearer, kinder, and more effective.',
+    images: [{ url: '/logo.png', width: 512, height: 512 }],
+  },
+};
 
 export default function Page() {
   return (

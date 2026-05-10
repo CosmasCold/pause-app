@@ -5,6 +5,10 @@ import { Toaster } from 'react-hot-toast';
 import Navigation from '@/components/Navigation';
 import Link from 'next/link';
 
+<head>
+  <link rel="icon" type="image/png" href="/icon.png" />
+</head>
+
 const inter = Inter({
   subsets: ['latin'],
   variable: '--font-inter',

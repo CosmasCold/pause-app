@@ -1,5 +1,18 @@
 import Navigation from '@/components/Navigation';
 import Link from 'next/link';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Why We Regret Our Messages (and How AI Can Help You Stop)',
+  description:
+    'Unchecked emotions and cognitive biases can turn a quick message into a lasting regret. Learn the science behind email regret and discover practical, AI‑powered strategies to tame your tone.',
+  openGraph: {
+    title: 'Why We Regret Our Messages (and How AI Can Help You Stop)',
+    description:
+      'Unchecked emotions and cognitive biases can turn a quick message into a lasting regret. Learn the science behind email regret and discover practical, AI‑powered strategies to tame your tone.',
+    images: [{ url: '/logo.png', width: 512, height: 512 }],
+  },
+};
 
 export default function Page() {
   return (

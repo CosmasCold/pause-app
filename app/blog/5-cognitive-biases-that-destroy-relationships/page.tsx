@@ -1,5 +1,18 @@
 import Navigation from '@/components/Navigation';
 import Link from 'next/link';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: '5 Cognitive Biases That Destroy Professional Relationships',
+  description:
+    'Mind reading, catastrophizing, and all‑or‑nothing thinking are more common in emails than you think. Learn how to spot them and steer your conversations back on track.',
+  openGraph: {
+    title: '5 Cognitive Biases That Destroy Professional Relationships',
+    description:
+      'Mind reading, catastrophizing, and all‑or‑nothing thinking are more common in emails than you think. Learn how to spot them and steer your conversations back on track.',
+    images: [{ url: '/logo.png', width: 512, height: 512 }],
+  },
+};
 
 export default function Page() {
   return (
