@@ -59,6 +59,7 @@ export default function RootLayout({
             <span>© {new Date().getFullYear()} Pause. All rights reserved.</span>
             <div className="flex gap-6">
               <Link href="/privacy" className="hover:text-stone-700">Privacy Policy</Link>
+              <Link href="/terms" className="hover:text-stone-700">Terms of Service</Link>
               <Link href="/contact" className="hover:text-stone-700">Contact</Link>
             </div>
           </div>

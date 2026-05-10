@@ -247,23 +247,25 @@ export default function Home() {
   };
 
   // ========== LANDING PAGE ==========
-  if (!user) {
-    return (
-      <main className="min-h-screen flex flex-col items-center justify-center px-4 py-20">
+  // ========== LANDING PAGE ==========
+if (!user) {
+  return (
+    <main className="min-h-screen">
+      {/* Hero */}
+      <section className="flex flex-col items-center justify-center px-4 py-20">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-center max-w-2xl"
+          className="text-center max-w-3xl"
         >
- <div className="mb-8 flex justify-center">
-  {/* eslint-disable-next-line @next/next/no-img-element */}
+          <div className="mb-8 flex justify-center">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-  src="/logo.png"
-  alt="Pause"
-  className="h-16 w-auto object-contain mx-auto"
-/>
+              src="/logo.png"
+              alt="Pause"
+              className="h-20 w-auto object-contain mx-auto"
+            />
           </div>
-
           <h1 className="font-playfair text-5xl md:text-7xl font-bold text-stone-800 mb-6">
             Pause before you send.
           </h1>
@@ -284,37 +286,110 @@ export default function Home() {
             No credit card required. Free plan includes 3 analyses per day.
           </p>
         </motion.div>
+      </section>
 
+      {/* How it works */}
+      <section className="max-w-5xl mx-auto px-4 py-16">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+        >
+          <h2 className="text-3xl font-playfair font-bold text-center text-stone-800 mb-12">
+            How it works
+          </h2>
+          <div className="grid md:grid-cols-3 gap-8 text-center">
+            <div>
+              <div className="w-14 h-14 bg-teal-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <span className="text-2xl">✍️</span>
+              </div>
+              <h3 className="font-semibold text-stone-800 mb-2">1. Write or paste</h3>
+              <p className="text-stone-500 text-sm">
+                Copy your draft email, Slack message, or tweet into Pause.
+              </p>
+            </div>
+            <div>
+              <div className="w-14 h-14 bg-teal-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <span className="text-2xl">🔍</span>
+              </div>
+              <h3 className="font-semibold text-stone-800 mb-2">2. Analyze instantly</h3>
+              <p className="text-stone-500 text-sm">
+                Our AI scans for biases, tone, and hidden assumptions in seconds.
+              </p>
+            </div>
+            <div>
+              <div className="w-14 h-14 bg-teal-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <span className="text-2xl">✨</span>
+              </div>
+              <h3 className="font-semibold text-stone-800 mb-2">3. Send with confidence</h3>
+              <p className="text-stone-500 text-sm">
+                Apply rephrasing suggestions or reflect before you hit send.
+              </p>
+            </div>
+          </div>
+        </motion.div>
+      </section>
+
+      {/* Demo / GIF placeholder */}
+      <section className="max-w-4xl mx-auto px-4 py-12">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="grid md:grid-cols-3 gap-8 mt-20 max-w-4xl w-full"
+          className="bg-white/80 rounded-3xl p-6 md:p-10 shadow-xl border border-stone-200 text-center"
         >
-          <FeatureCard
-            icon={<Brain className="w-6 h-6" />}
-            title="Cognitive Bias Detection"
-            description="Our AI flags all-or-nothing thinking, mind reading, catastrophizing, and more."
-          />
-          <FeatureCard
-            icon={<Heart className="w-6 h-6" />}
-            title="Emotional Tone Analysis"
-            description="See how your message opens, flows, and closes — and if the tone shifts."
-          />
-          <FeatureCard
-            icon={<Shield className="w-6 h-6" />}
-            title="Private &amp; Instant"
-            description="Your text is processed securely and never stored unless you choose to save it."
-          />
+          <h3 className="text-2xl font-playfair font-bold text-stone-800 mb-4">
+            See Pause in action
+          </h3>
+          <p className="text-stone-600 mb-6 max-w-lg mx-auto">
+            Here&apos;s what happens when you paste a heated email into Pause.
+            The regret probability, biases, and suggestions appear instantly.
+          </p>
+          {/* Placeholder for demo GIF or video */}
+          <div className="bg-stone-100 rounded-2xl p-10 text-stone-400 text-sm">
+            [ Demo GIF or screenshot goes here – replace this with an actual image ]
+          </div>
         </motion.div>
+      </section>
 
-        {/* Auth modal */}
-        {showAuth && (
-          <AuthModal isOpen={showAuth} onClose={() => setShowAuth(false)} />
-        )}
-      </main>
-    );
-  }
+      {/* Testimonial */}
+      <section className="max-w-4xl mx-auto px-4 py-12">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+        >
+          <blockquote className="bg-white/80 rounded-3xl p-8 md:p-10 shadow-xl border border-stone-200 text-center">
+            <p className="text-lg text-stone-600 italic mb-4">
+              &ldquo;Pause caught a passive‑aggressive tone I didn&rsquo;t even realise I had.
+              My draft went from a career‑limiting grenade to a professional email in one click.
+              It&rsquo;s like having a communication coach on speed dial.&rdquo;
+            </p>
+            <cite className="text-stone-500 not-italic">
+              — A very relieved Product Manager
+            </cite>
+          </blockquote>
+        </motion.div>
+      </section>
+
+      {/* Final CTA */}
+      <section className="text-center pb-20 px-4">
+        <button
+          onClick={() => setShowAuth(true)}
+          className="bg-teal-500 text-white px-10 py-4 rounded-2xl font-semibold text-lg hover:bg-teal-600 transition-colors shadow-xl shadow-teal-200/40 inline-flex items-center gap-2"
+        >
+          Get Started Free
+          <ArrowRight className="w-5 h-5" />
+        </button>
+      </section>
+
+      {/* Auth modal */}
+      {showAuth && (
+        <AuthModal isOpen={showAuth} onClose={() => setShowAuth(false)} />
+      )}
+    </main>
+  );
+}
 
   // ========== MAIN APP (signed in) ==========
   return (
