@@ -1,3 +1,6 @@
+/* stylelint-disable unknownAtRules */
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 

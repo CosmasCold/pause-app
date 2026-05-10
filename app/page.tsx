@@ -330,6 +330,62 @@ if (!user) {
         </motion.div>
       </section>
 
+      {/* Newsletter signup */}
+<section className="max-w-lg mx-auto px-4 py-12">
+  <motion.div
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ delay: 0.5 }}
+    className="bg-white/80 rounded-3xl p-8 shadow-xl border border-stone-200 text-center"
+  >
+    <h3 className="text-xl font-playfair font-bold text-stone-800 mb-2">
+      Get weekly communication tips
+    </h3>
+    <p className="text-stone-600 mb-6 text-sm">
+      One practical tip every Monday to help you write clearer, kinder messages.
+    </p>
+    <form
+      onSubmit={async (e) => {
+        e.preventDefault();
+        const form = e.target as HTMLFormElement;
+        const email = (form.elements.namedItem('email') as HTMLInputElement).value;
+        try {
+          const res = await fetch('/api/subscribe', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email }),
+          });
+          const data = await res.json();
+          if (res.ok) {
+            toast.success(data.message || 'Subscribed!');
+            form.reset();
+          } else {
+            toast.error(data.error || 'Something went wrong');
+          }
+        } catch {
+          toast.error('Network error');
+        }
+      }}
+      className="flex gap-2"
+    >
+      <input
+        type="email"
+        name="email"
+        placeholder="you@example.com"
+        required
+        className="flex-1 px-4 py-3 border-2 border-stone-200 rounded-2xl focus:outline-none focus:border-teal-500 text-stone-700"
+      />
+      <button
+        type="submit"
+        className="bg-teal-500 text-white px-5 py-3 rounded-2xl font-medium hover:bg-teal-600 transition-colors"
+      >
+        Subscribe
+      </button>
+    </form>
+    <p className="text-stone-400 text-xs mt-4">No spam. Unsubscribe anytime.</p>
+  </motion.div>
+</section>
+
       {/* Demo / GIF placeholder */}
       <section className="max-w-4xl mx-auto px-4 py-12">
         <motion.div

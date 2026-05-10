@@ -12,11 +12,11 @@ const supabaseAdmin = createClient(
 
 export async function GET() {
   try {
-    // Read the newsletter content from the markdown file
+    // Read newsletter Markdown
     const filePath = path.join(process.cwd(), 'content', 'newsletter', 'latest.md');
     const rawContent = fs.readFileSync(filePath, 'utf-8');
 
-    // Simple Markdown to HTML conversion (you can use a library for more features)
+    // Convert simple Markdown to HTML
     const htmlContent = rawContent
       .replace(/^### (.*$)/gim, '<h3>$1</h3>')
       .replace(/^## (.*$)/gim, '<h2>$1</h2>')
@@ -38,34 +38,50 @@ export async function GET() {
       </div>
     `;
 
-    // Fetch subscribers (users with email_reports = true, excluding free tier)
-    const { data: users } = await supabaseAdmin
+    // 1. Paid users with reports enabled
+    const { data: paidUsers } = await supabaseAdmin
       .from('user_profiles')
       .select('id, email')
       .eq('email_reports', true)
       .neq('tier', 'free');
 
-    if (!users || users.length === 0) {
+    // 2. Public newsletter subscribers
+    const { data: publicSubscribers } = await supabaseAdmin
+      .from('newsletter_subscribers')
+      .select('email');
+
+    // Combine and deduplicate
+    const allEmails = new Map<string, string>();
+
+    (paidUsers || []).forEach((u) => {
+      if (u.email) allEmails.set(u.email, u.email);
+    });
+
+    (publicSubscribers || []).forEach((sub) => {
+      if (sub.email) allEmails.set(sub.email, sub.email);
+    });
+
+    const recipients = Array.from(allEmails.values());
+
+    if (recipients.length === 0) {
       return NextResponse.json({ message: 'No subscribers found' });
     }
 
-    // Send email to each subscriber
-    const resendKey = process.env.RESEND_API_KEY;
-    if (!resendKey) {
-      return NextResponse.json({ error: 'RESEND_API_KEY not set' }, { status: 500 });
+    if (!process.env.RESEND_API_KEY) {
+      return NextResponse.json({ error: 'RESEND_API_KEY not configured' }, { status: 500 });
     }
 
     const results = await Promise.allSettled(
-      users.map(async (user) => {
+      recipients.map(async (email) => {
         await fetch('https://api.resend.com/emails', {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${resendKey}`,
+            'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
             from: 'Pause Weekly <noreply@pauseapp.space>',
-            to: user.email,
+            to: email,
             subject: 'Pause Weekly – Communication Tip',
             html: emailHtml,
           }),
@@ -73,8 +89,8 @@ export async function GET() {
       })
     );
 
-    const successes = results.filter(r => r.status === 'fulfilled').length;
-    const failures = results.filter(r => r.status === 'rejected').length;
+    const successes = results.filter((r) => r.status === 'fulfilled').length;
+    const failures = results.filter((r) => r.status === 'rejected').length;
 
     return NextResponse.json({
       message: `Newsletter sent: ${successes} successful, ${failures} failed`,
