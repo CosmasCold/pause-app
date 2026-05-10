@@ -8,6 +8,7 @@ import { Check, ArrowRight, Sparkles } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Navigation from '@/components/Navigation';
 import { supabase } from '@/lib/supabase';
+import Link from 'next/link';
 
 const plans = [
   {
@@ -158,13 +159,13 @@ export default function PricingPage() {
 
                 {/* Free plan button: disabled, no action */}
                 {!plan.priceId ? (
-                  <button
-                    disabled
-                    className="w-full py-3.5 rounded-2xl font-medium bg-stone-100 text-stone-500 cursor-not-allowed"
-                  >
-                    {plan.cta}
-                  </button>
-                ) : (
+  <Link
+    href="/"
+    className="w-full inline-block text-center py-3.5 rounded-2xl font-medium bg-stone-100 text-stone-500 hover:bg-stone-200 transition-colors"
+  >
+    Go to Pause
+  </Link>
+) : (
                   <button
                     onClick={() => handleSubscribe(plan.priceId)}
                     disabled={loadingTier === plan.priceId}
