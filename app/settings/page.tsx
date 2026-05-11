@@ -37,9 +37,8 @@ function SettingsContent() {
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
-
-  // Team ownership
   const [isOwner, setIsOwner] = useState(false);
+  const [isOpeningPortal, setIsOpeningPortal] = useState(false);
 
   const initialized = useRef(false);
   const confirmedRef = useRef(false);
@@ -66,7 +65,6 @@ function SettingsContent() {
       setName(profileData.name || '');
       setAvatarPreview(profileData.avatar_url || null);
 
-      // Check if team owner
       if (profileData.tier === 'team') {
         const { data: team } = await supabase
           .from('teams')
@@ -88,7 +86,6 @@ function SettingsContent() {
     }
   }, []);
 
-  // Handle Stripe checkout session redirect (unchanged)
   useEffect(() => {
     const sessionId = searchParams.get('session_id');
     if (!sessionId || !profile || confirmedRef.current) return;
@@ -194,32 +191,46 @@ function SettingsContent() {
     if (updateError) {
       toast.error('Failed to save avatar');
     } else {
-      setProfile((prev) => prev ? { ...prev, avatar_url: avatarUrl } : prev);
+      setProfile((prev) => (prev ? { ...prev, avatar_url: avatarUrl } : prev));
       setAvatarPreview(avatarUrl);
       toast.success('Profile picture updated');
     }
     setAvatarFile(null);
   };
 
-  const handleCancelSubscription = async () => {
-    if (!confirm('Are you sure? Your subscription will remain active until the end of the billing period, then you will be downgraded to the free plan.')) return;
-
+  const handleManageSubscription = async () => {
+    setIsOpeningPortal(true);
     try {
-      const res = await fetch('/api/cancel-subscription', {
+      const user = (await supabase.auth.getUser()).data.user;
+      if (!user) return;
+
+      const { data: userProfile } = await supabase
+        .from('user_profiles')
+        .select('stripe_customer_id')
+        .eq('id', user.id)
+        .single();
+
+      if (!userProfile?.stripe_customer_id) {
+        toast.error('No billing profile found');
+        setIsOpeningPortal(false);
+        return;
+      }
+
+      const res = await fetch('/api/create-portal', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: (await supabase.auth.getUser()).data.user?.id }),
+        body: JSON.stringify({ customerId: userProfile.stripe_customer_id }),
       });
-      const data = await res.json();
-      if (res.ok) {
-        toast.success(data.message);
-        setProfile((prev) => (prev ? { ...prev, tier: 'free' } : prev));
-        setIsOwner(false);
+      const portalData = await res.json();
+      if (portalData.url) {
+        window.location.href = portalData.url;
       } else {
-        toast.error(data.error || 'Failed');
+        toast.error('Could not open portal');
       }
     } catch {
       toast.error('Network error');
+    } finally {
+      setIsOpeningPortal(false);
     }
   };
 
@@ -261,7 +272,7 @@ function SettingsContent() {
 
       <h1 className="text-4xl font-playfair font-bold text-stone-800 mb-8">Settings</h1>
 
-      {/* Profile Section (unchanged) */}
+      {/* Profile Section */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -377,18 +388,19 @@ function SettingsContent() {
             )}
           </div>
 
-          {/* Cancel Subscription button – only for Pro, or Team owner */}
-          {(profile?.tier === 'pro' || (profile?.tier === 'team' && isOwner)) && (
+          {/* Stripe Customer Portal – for all paid users */}
+          {(profile?.tier === 'pro' || profile?.tier === 'team') && (
             <div className="flex items-center justify-between py-3 border-t border-stone-200/50">
               <div>
                 <p className="font-medium text-stone-700">Subscription</p>
-                <p className="text-stone-500 text-sm">Cancel your subscription</p>
+                <p className="text-stone-500 text-sm">Manage billing, payment method, or cancel</p>
               </div>
               <button
-                onClick={handleCancelSubscription}
-                className="text-red-600 hover:text-red-700 font-medium text-sm"
+                onClick={handleManageSubscription}
+                disabled={isOpeningPortal}
+                className="text-teal-600 hover:text-teal-700 font-medium text-sm disabled:opacity-50"
               >
-                Cancel
+                {isOpeningPortal ? 'Opening...' : 'Manage'}
               </button>
             </div>
           )}
