@@ -389,7 +389,7 @@ function SettingsContent() {
           </div>
 
           {/* Stripe Customer Portal – for all paid users */}
-          {(profile?.tier === 'pro' || profile?.tier === 'team') && (
+          {(profile?.tier === 'pro' || (profile?.tier === 'team' && isOwner)) && (
             <div className="flex items-center justify-between py-3 border-t border-stone-200/50">
               <div>
                 <p className="font-medium text-stone-700">Subscription</p>
