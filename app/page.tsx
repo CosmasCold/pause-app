@@ -331,24 +331,7 @@ if (!user) {
         </motion.div>
       </section>
 
-      {/* Newsletter signup */}
-<section className="max-w-lg mx-auto px-4 py-12">
-  <motion.div
-    initial={{ opacity: 0, y: 20 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ delay: 0.5 }}
-    className="bg-white/80 rounded-3xl p-8 shadow-xl border border-stone-200 text-center"
-  >
-    <h3 className="text-xl font-playfair font-bold text-stone-800 mb-2">
-      Get weekly communication tips
-    </h3>
-    <p className="text-stone-600 mb-6 text-sm">
-      One practical tip every Monday to help you write clearer, kinder messages.
-    </p>
-    <NewsletterForm />
-    <p className="text-stone-400 text-xs mt-4">No spam. Unsubscribe anytime.</p>
-  </motion.div>
-</section>
+      
 
       {/* Demo / GIF placeholder */}
       <section className="max-w-4xl mx-auto px-4 py-12">
