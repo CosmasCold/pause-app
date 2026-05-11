@@ -210,22 +210,42 @@ function SettingsContent() {
         .eq('id', user.id)
         .single();
 
-      if (!userProfile?.stripe_customer_id) {
-        toast.error('No billing profile found');
-        setIsOpeningPortal(false);
-        return;
+      let customerId = userProfile?.stripe_customer_id;
+
+      if (!customerId) {
+        const ensureRes = await fetch('/api/ensure-customer', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: user.id, email: user.email }),
+        });
+        const ensureData = await ensureRes.json();
+        if (!ensureRes.ok || !ensureData.customerId) {
+          toast.error('Could not set up billing profile');
+          setIsOpeningPortal(false);
+          return;
+        }
+        customerId = ensureData.customerId;
+
+        const { error: updateError } = await supabase
+          .from('user_profiles')
+          .update({ stripe_customer_id: customerId })
+          .eq('id', user.id);
+
+        if (updateError) {
+          console.error('Failed to save customer ID:', updateError);
+        }
       }
 
-      const res = await fetch('/api/create-portal', {
+      const portalRes = await fetch('/api/create-portal', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ customerId: userProfile.stripe_customer_id }),
+        body: JSON.stringify({ customerId }),
       });
-      const portalData = await res.json();
+      const portalData = await portalRes.json();
       if (portalData.url) {
         window.location.href = portalData.url;
       } else {
-        toast.error('Could not open portal');
+        toast.error(portalData.error || 'Could not open portal');
       }
     } catch {
       toast.error('Network error');
@@ -388,7 +408,7 @@ function SettingsContent() {
             )}
           </div>
 
-          {/* Stripe Customer Portal – for all paid users */}
+          {/* Stripe Customer Portal – for Pro users and team owners */}
           {(profile?.tier === 'pro' || (profile?.tier === 'team' && isOwner)) && (
             <div className="flex items-center justify-between py-3 border-t border-stone-200/50">
               <div>
