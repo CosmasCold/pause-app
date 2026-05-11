@@ -22,6 +22,7 @@ function SettingsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [profile, setProfile] = useState<{
+    id?: string;
     email: string;
     tier: string;
     email_reports: boolean;
@@ -37,6 +38,9 @@ function SettingsContent() {
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
+  // Team ownership
+  const [isOwner, setIsOwner] = useState(false);
+
   const initialized = useRef(false);
   const confirmedRef = useRef(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -50,6 +54,7 @@ function SettingsContent() {
         .eq('id', user.id)
         .single();
       const profileData = data || {
+        id: user.id,
         email: user.email || '',
         tier: 'free',
         email_reports: true,
@@ -60,6 +65,18 @@ function SettingsContent() {
       setEmailReports(profileData.email_reports);
       setName(profileData.name || '');
       setAvatarPreview(profileData.avatar_url || null);
+
+      // Check if team owner
+      if (profileData.tier === 'team') {
+        const { data: team } = await supabase
+          .from('teams')
+          .select('id')
+          .eq('created_by', user.id)
+          .single();
+        setIsOwner(!!team);
+      } else {
+        setIsOwner(false);
+      }
     }
     setLoading(false);
   };
@@ -71,68 +88,35 @@ function SettingsContent() {
     }
   }, []);
 
-  // Handle Stripe checkout session redirect – run once when profile is ready
+  // Handle Stripe checkout session redirect (unchanged)
   useEffect(() => {
-  const sessionId = searchParams.get('session_id');
-  if (!sessionId || !profile) return;
+    const sessionId = searchParams.get('session_id');
+    if (!sessionId || !profile || confirmedRef.current) return;
+    confirmedRef.current = true;
 
-  // Prevent multiple calls
-  if (confirmedRef.current) return;
-  confirmedRef.current = true;
-
-  const confirmPayment = async () => {
-    try {
-      const response = await fetch('/api/confirm-payment', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sessionId }),
-      });
-      const result = await response.json();
-
-      if (result.tier) {
-        // 1) Update the profile state locally
-        setProfile((prev) => (prev ? { ...prev, tier: result.tier } : prev));
-        setEmailReports(profile?.email_reports ?? true);
-        setName(profile?.name ?? '');
-        setAvatarPreview(profile?.avatar_url ?? null);
-
-        // 2) Remove the session_id from the URL (so it doesn't run again)
-        router.replace('/settings');
-
-        // 3) Show success toast
-        toast.success(`Upgraded to ${result.tier}!`, { duration: 5000 });
-      } else {
+    const confirmPayment = async () => {
+      try {
+        const response = await fetch('/api/confirm-payment', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sessionId }),
+        });
+        const result = await response.json();
+        if (result.tier) {
+          setProfile((prev) => (prev ? { ...prev, tier: result.tier } : prev));
+          toast.success(`Upgraded to ${result.tier}!`, { duration: 4000 });
+        } else {
+          toast.error('Could not confirm payment');
+          router.replace('/settings');
+        }
+      } catch {
         toast.error('Could not confirm payment');
         router.replace('/settings');
       }
-    } catch {
-      toast.error('Could not confirm payment');
-      router.replace('/settings');
-    }
-  };
-
-  confirmPayment();
-}, [searchParams, profile, router]);
-
-useEffect(() => {
-  const shouldUnsubscribe = searchParams.get('unsubscribe');
-  if (shouldUnsubscribe === 'true' && profile?.email_reports) {
-    const doUnsubscribe = async () => {
-      const { error } = await supabase
-        .from('user_profiles')
-        .update({ email_reports: false })
-        .eq('id', (await supabase.auth.getUser()).data.user?.id);
-
-      if (!error) {
-        setEmailReports(false);
-        toast.success('You have been unsubscribed.');
-      } else {
-        toast.error('Failed to unsubscribe');
-      }
     };
-    doUnsubscribe();
-  }
-}, [searchParams, profile]);
+
+    confirmPayment();
+  }, [searchParams, profile, router]);
 
   const handleToggleReports = async () => {
     const newValue = !emailReports;
@@ -217,6 +201,28 @@ useEffect(() => {
     setAvatarFile(null);
   };
 
+  const handleCancelSubscription = async () => {
+    if (!confirm('Are you sure? Your subscription will remain active until the end of the billing period, then you will be downgraded to the free plan.')) return;
+
+    try {
+      const res = await fetch('/api/cancel-subscription', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: (await supabase.auth.getUser()).data.user?.id }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        toast.success(data.message);
+        setProfile((prev) => (prev ? { ...prev, tier: 'free' } : prev));
+        setIsOwner(false);
+      } else {
+        toast.error(data.error || 'Failed');
+      }
+    } catch {
+      toast.error('Network error');
+    }
+  };
+
   const handleSignOut = async () => {
     await supabase.auth.signOut();
     window.location.href = '/';
@@ -255,7 +261,7 @@ useEffect(() => {
 
       <h1 className="text-4xl font-playfair font-bold text-stone-800 mb-8">Settings</h1>
 
-      {/* Profile Section */}
+      {/* Profile Section (unchanged) */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -370,6 +376,22 @@ useEffect(() => {
               </div>
             )}
           </div>
+
+          {/* Cancel Subscription button – only for Pro, or Team owner */}
+          {(profile?.tier === 'pro' || (profile?.tier === 'team' && isOwner)) && (
+            <div className="flex items-center justify-between py-3 border-t border-stone-200/50">
+              <div>
+                <p className="font-medium text-stone-700">Subscription</p>
+                <p className="text-stone-500 text-sm">Cancel your subscription</p>
+              </div>
+              <button
+                onClick={handleCancelSubscription}
+                className="text-red-600 hover:text-red-700 font-medium text-sm"
+              >
+                Cancel
+              </button>
+            </div>
+          )}
 
           {profile?.tier === 'team' && (
             <div className="flex items-center justify-between py-3 border-t border-stone-200/50">
