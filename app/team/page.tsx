@@ -117,7 +117,9 @@ export default function TeamPage() {
         if (user) {
           setMembers([{ id: user.id, email: user.email || '' }]);
         }
-        toast.success('Team created!');
+        toast.success('Team created!', {
+          style: { background: '#ecfdf5', color: '#059669', border: '1px solid #a7f3d0' },
+        });
       } else {
         toast.error(data.error || 'Failed');
       }
@@ -144,7 +146,9 @@ export default function TeamPage() {
       if (addData.success) {
         setMembers((prev) => [...prev, { id: '', email: memberEmail }]);
         setMemberEmail('');
-        toast.success('Member added!');
+        toast.success('Member added!', {
+          style: { background: '#ecfdf5', color: '#059669', border: '1px solid #a7f3d0' },
+        });
         setIsAddingMember(false);
         return;
       }
@@ -161,7 +165,9 @@ export default function TeamPage() {
 
         if (invData.success) {
           setMemberEmail('');
-          toast.success(`Invitation sent to ${memberEmail}!`);
+          toast.success(`Invitation sent to ${memberEmail}!`, {
+            style: { background: '#ecfdf5', color: '#059669', border: '1px solid #a7f3d0' },
+          });
         } else {
           toast.error(invData.error || 'Failed to send invite');
         }
@@ -189,7 +195,9 @@ export default function TeamPage() {
         toast.error(data.error || 'Failed');
       } else {
         setMembers((prev) => prev.filter((m) => m.email !== email));
-        toast.success('Member removed');
+        toast.success('Member removed', {
+          style: { background: '#ecfdf5', color: '#059669', border: '1px solid #a7f3d0' },
+        });
       }
     } catch {
       toast.error('Could not reach server. Please try again.');
@@ -216,8 +224,8 @@ export default function TeamPage() {
         <Navigation />
         <div className="pt-24 text-center max-w-md mx-auto px-4">
           <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-          <h2 className="text-2xl font-playfair font-bold text-stone-800 mb-2">Something went wrong</h2>
-          <p className="text-stone-600 mb-6">{error}</p>
+          <h2 className="text-2xl font-playfair font-bold text-stone-950 mb-2">Something went wrong</h2>
+          <p className="text-stone-700 mb-6">{error}</p>
           <button onClick={fetchTeam} className="bg-teal-500 text-white px-4 py-2 rounded-2xl font-medium hover:bg-teal-600">
             Try Again
           </button>
@@ -236,8 +244,8 @@ export default function TeamPage() {
             <div className="w-20 h-20 bg-amber-50 rounded-full flex items-center justify-center mx-auto mb-6">
               <AlertCircle className="w-10 h-10 text-amber-500" />
             </div>
-            <h1 className="text-3xl font-playfair font-bold text-stone-800 mb-4">Team Plan Required</h1>
-            <p className="text-stone-600 mb-8 max-w-md mx-auto leading-relaxed">
+            <h1 className="text-3xl font-playfair font-bold text-stone-950 mb-4">Team Plan Required</h1>
+            <p className="text-stone-700 mb-8 max-w-md mx-auto leading-relaxed">
               The Team feature is exclusively for team subscribers.
               Upgrade your plan to unlock team management, member analytics,
               and collaborative insights.
@@ -265,13 +273,13 @@ export default function TeamPage() {
           <button onClick={() => router.back()} className="flex items-center gap-2 text-stone-500 hover:text-stone-700 mb-8 transition-colors">
             <ArrowLeft className="w-4 h-4" /> <span className="text-sm font-medium">Back</span>
           </button>
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-white/90 rounded-3xl p-8 shadow-xl shadow-stone-300/40 border border-stone-300/50">
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-white/90 rounded-3xl p-8 shadow-lg shadow-stone-300/60 border border-stone-300/70">
             <div className="text-center mb-8">
               <div className="w-16 h-16 bg-teal-50 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Users className="w-8 h-8 text-teal-600" />
               </div>
-              <h1 className="text-2xl font-playfair font-bold text-stone-800 mb-2">Create Your Team</h1>
-              <p className="text-stone-600 text-sm">You&apos;re on the Team plan. Set up your team to start collaborating.</p>
+              <h1 className="text-2xl font-playfair font-bold text-stone-950 mb-2">Create Your Team</h1>
+              <p className="text-stone-700 text-sm">You&apos;re on the Team plan. Set up your team to start collaborating.</p>
             </div>
             <div className="space-y-4">
               <label className="block text-sm font-medium text-stone-700">Team Name</label>
@@ -296,10 +304,10 @@ export default function TeamPage() {
         </button>
 
         {/* Team header */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-white/90 rounded-3xl p-8 shadow-xl shadow-stone-300/40 border border-stone-300/50 mb-6">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-white/90 rounded-3xl p-8 shadow-lg shadow-stone-300/60 border border-stone-300/70 mb-6">
           <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
             <div>
-              <h1 className="text-3xl font-playfair font-bold text-stone-800">{team.name}</h1>
+              <h1 className="text-3xl font-playfair font-bold text-stone-950">{team.name}</h1>
               <div className="flex items-center gap-2 mt-2 text-stone-500 text-sm">
                 <Users className="w-4 h-4" />
                 <span>{members.length} / {team.seats_total} members</span>
@@ -322,8 +330,8 @@ export default function TeamPage() {
 
         {/* Add member – OWNER ONLY */}
         {isOwner && (
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="bg-white/90 rounded-3xl p-6 shadow-xl shadow-stone-300/40 border border-stone-300/50 mb-6">
-            <h2 className="text-lg font-semibold text-stone-800 mb-4 flex items-center gap-2">
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="bg-white/90 rounded-3xl p-6 shadow-lg shadow-stone-300/60 border border-stone-300/70 mb-6">
+            <h2 className="text-lg font-semibold text-stone-950 mb-4 flex items-center gap-2">
               <UserPlus className="w-5 h-5 text-teal-600" /> Add Member
             </h2>
             <div className="flex gap-3">
@@ -342,8 +350,8 @@ export default function TeamPage() {
         )}
 
         {/* Members list */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="bg-white/90 rounded-3xl p-6 shadow-xl shadow-stone-300/40 border border-stone-300/50">
-          <h2 className="text-lg font-semibold text-stone-800 mb-4 flex items-center gap-2">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="bg-white/90 rounded-3xl p-6 shadow-lg shadow-stone-300/60 border border-stone-300/70">
+          <h2 className="text-lg font-semibold text-stone-950 mb-4 flex items-center gap-2">
             <Users className="w-5 h-5 text-teal-600" /> Team Members
           </h2>
           <div className="divide-y divide-stone-100">
