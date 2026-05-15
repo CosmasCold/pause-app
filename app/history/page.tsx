@@ -61,7 +61,6 @@ export default function HistoryPage() {
       return;
     }
 
-    // Fetch tier
     const { data: profile } = await supabase
       .from('user_profiles')
       .select('tier')
@@ -69,7 +68,6 @@ export default function HistoryPage() {
       .single();
     setUserTier(profile?.tier || 'free');
 
-    // Fetch analyses
     const { data, error } = await supabase
       .from('saved_analyses')
       .select('*')
@@ -80,17 +78,24 @@ export default function HistoryPage() {
     if (data) setAnalyses(data);
     if (error) toast.error('Failed to load history');
 
-    // Fetch trends if Pro/Team
     if (profile?.tier === 'pro' || profile?.tier === 'team') {
       try {
         const trendRes = await fetch('/api/trends');
         if (trendRes.ok) {
           const trendData = await trendRes.json();
-          setTrends(trendData.trends);
-          setMostImprovedBias(trendData.mostImprovedBias);
+          setTrends(trendData.trends || {
+            days7: { averageScore: 0, count: 0 },
+            days30: { averageScore: 0, count: 0 },
+            days90: { averageScore: 0, count: 0 },
+          });
+          setMostImprovedBias(trendData.mostImprovedBias || null);
+        } else {
+          setTrends({ days7: { averageScore: 0, count: 0 }, days30: { averageScore: 0, count: 0 }, days90: { averageScore: 0, count: 0 } });
+          setMostImprovedBias(null);
         }
       } catch {
-        // silently fail trends
+        setTrends({ days7: { averageScore: 0, count: 0 }, days30: { averageScore: 0, count: 0 }, days90: { averageScore: 0, count: 0 } });
+        setMostImprovedBias(null);
       }
     }
 
@@ -104,7 +109,6 @@ export default function HistoryPage() {
     }
   }, []);
 
-  // --- All existing handlers (toggleFavorite, deleteAnalysis, exportHistory, downloadPDF) remain unchanged ---
   const toggleFavorite = async (id: string, current: boolean) => {
     const { error } = await supabase
       .from('saved_analyses')
@@ -196,17 +200,16 @@ export default function HistoryPage() {
 
       <h1 className="text-4xl font-playfair font-bold text-stone-800 mb-8">History</h1>
 
-      {/* ====== Progress Section (Pro only) ====== */}
-      {isPaid && trends && (
+      {/* ====== Progress Section (Pro/Team only, shown after loading) ====== */}
+      {!loading && isPaid && (
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-10 bg-white/90 rounded-3xl p-6 shadow-xl shadow-stone-300/40 border border-stone-300/50">
           <h2 className="text-xl font-playfair font-bold text-stone-800 mb-6">Your Progress</h2>
 
-          {/* Trend numbers */}
           <div className="grid grid-cols-3 gap-4 mb-6">
             {[
-              { label: '7 Days', data: trends.days7 },
-              { label: '30 Days', data: trends.days30 },
-              { label: '90 Days', data: trends.days90 },
+              { label: '7 Days', data: trends?.days7 || { averageScore: 0, count: 0 } },
+              { label: '30 Days', data: trends?.days30 || { averageScore: 0, count: 0 } },
+              { label: '90 Days', data: trends?.days90 || { averageScore: 0, count: 0 } },
             ].map(({ label, data }) => (
               <div key={label} className="text-center p-4 bg-stone-50 rounded-2xl">
                 <p className="text-xs text-stone-500 mb-1">{label}</p>
@@ -218,7 +221,6 @@ export default function HistoryPage() {
             ))}
           </div>
 
-          {/* Most improved bias */}
           {mostImprovedBias && (
             <div className="flex items-center gap-3 p-4 bg-teal-50 rounded-2xl">
               <TrendingDown className="w-5 h-5 text-teal-600" />
@@ -233,14 +235,14 @@ export default function HistoryPage() {
             </div>
           )}
 
-          {!mostImprovedBias && trends.days30.count > 0 && (
+          {!mostImprovedBias && (trends?.days30?.count || 0) > 0 && (
             <p className="text-sm text-stone-500 text-center">Keep analyzing to see your bias improvement.</p>
           )}
         </motion.div>
       )}
 
-      {/* ====== Upgrade prompt for free users ====== */}
-      {!isPaid && (
+      {/* ====== Upgrade prompt for free users (shown after loading) ====== */}
+      {!loading && !isPaid && (
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-10 bg-white/90 rounded-3xl p-6 shadow-xl shadow-stone-300/40 border border-stone-300/50 text-center">
           <TrendingUp className="w-8 h-8 text-teal-500 mx-auto mb-3" />
           <h3 className="text-lg font-semibold text-stone-800 mb-2">Track your progress over time</h3>
@@ -253,7 +255,7 @@ export default function HistoryPage() {
         </motion.div>
       )}
 
-      {/* ====== Existing header with export buttons ====== */}
+      {/* ====== Header with export buttons ====== */}
       <div className="flex justify-between items-center mb-8">
         <div>
           <p className="text-stone-600">{analyses.length} analyses saved</p>
@@ -268,6 +270,11 @@ export default function HistoryPage() {
                 <Download className="w-4 h-4" /> CSV
               </button>
             </>
+          )}
+          {!isPaid && (
+            <Link href="/pricing" className="flex items-center gap-2 px-4 py-2.5 bg-teal-500 text-white rounded-2xl font-medium hover:bg-teal-600 transition-colors text-sm shadow-lg shadow-teal-200/30">
+              <TrendingUp className="w-4 h-4" /> Upgrade to Export
+            </Link>
           )}
           <button onClick={fetchHistory} className="p-2.5 bg-white/80 rounded-2xl border border-stone-300/50 hover:bg-white transition-colors">
             <RefreshCw className="w-4 h-4 text-stone-600" />
@@ -295,7 +302,7 @@ export default function HistoryPage() {
         </select>
       </div>
 
-      {/* List */}
+      {/* Analysis List */}
       {loading ? (
         <div className="text-center py-20">
           <RefreshCw className="w-8 h-8 animate-spin mx-auto text-teal-600" />
