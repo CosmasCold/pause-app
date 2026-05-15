@@ -23,7 +23,7 @@ import { AnalysisResult, WritingContext } from '@/lib/types';
 import ShareCard from '@/components/ShareCard';
 import { supabase } from '@/lib/supabase';
 import AuthModal from '@/components/AuthModal';
-import NewsletterForm from '@/components/NewsletterForm';
+
 
 export default function Home() {
   const [text, setText] = useState('');
