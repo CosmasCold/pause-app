@@ -5,6 +5,7 @@ import { Toaster } from 'react-hot-toast';
 import Navigation from '@/components/Navigation';
 import Link from 'next/link';
 import NewsletterForm from '@/components/NewsletterForm';
+import { Analytics } from '@vercel/analytics/next';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -65,6 +66,7 @@ export default function RootLayout({
     </div>
   </div>
 </footer>
+        <Analytics />
       </body>
     </html>
   );
