@@ -1,12 +1,15 @@
 // app/api/team/manage/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import Stripe from 'stripe';
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_KEY!,
   { auth: { autoRefreshToken: false, persistSession: false } }
 );
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
 export async function GET(request: NextRequest) {
   try {
@@ -73,7 +76,10 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Team tier required' }, { status: 403 });
       }
 
-      const seatCount = seatsTotal || 10; // Default 10 if not provided
+      const seatCount = seatsTotal || 5;
+      if (seatCount < 5) {
+        return NextResponse.json({ error: 'Team plan requires a minimum of 5 seats' }, { status: 400 });
+      }
 
       const { data: team, error: createError } = await supabaseAdmin
         .from('teams')
@@ -95,6 +101,31 @@ export async function POST(request: NextRequest) {
         .from('user_profiles')
         .update({ team_id: team.id })
         .eq('id', userId);
+
+      // Sync seat count to Stripe
+      const { data: ownerProfile } = await supabaseAdmin
+        .from('user_profiles')
+        .select('stripe_customer_id')
+        .eq('id', userId)
+        .single();
+
+      if (ownerProfile?.stripe_customer_id) {
+        const subscriptions = await stripe.subscriptions.list({
+          customer: ownerProfile.stripe_customer_id,
+          price: process.env.STRIPE_TEAM_PRICE_ID!,
+          status: 'active',
+          limit: 1,
+        });
+        const subscription = subscriptions.data[0];
+        if (subscription) {
+          await stripe.subscriptions.update(subscription.id, {
+            items: [{
+              id: subscription.items.data[0].id,
+              quantity: seatCount,
+            }],
+          });
+        }
+      }
 
       return NextResponse.json({ team });
     }
@@ -265,8 +296,8 @@ export async function POST(request: NextRequest) {
     // ================== UPDATE SEATS ==================
     if (action === 'update-seats') {
       const newTotal = seatsTotal;
-      if (!newTotal || isNaN(newTotal) || newTotal < 1) {
-        return NextResponse.json({ error: 'Invalid seat count' }, { status: 400 });
+      if (!newTotal || isNaN(newTotal) || newTotal < 5) {
+        return NextResponse.json({ error: 'Team plan requires a minimum of 5 seats' }, { status: 400 });
       }
 
       const { data: team } = await supabaseAdmin
@@ -287,6 +318,31 @@ export async function POST(request: NextRequest) {
         .from('teams')
         .update({ seats_total: newTotal })
         .eq('id', team.id);
+
+      // Sync seat count to Stripe
+      const { data: ownerProfile } = await supabaseAdmin
+        .from('user_profiles')
+        .select('stripe_customer_id')
+        .eq('id', userId)
+        .single();
+
+      if (ownerProfile?.stripe_customer_id) {
+        const subscriptions = await stripe.subscriptions.list({
+          customer: ownerProfile.stripe_customer_id,
+          price: process.env.STRIPE_TEAM_PRICE_ID!,
+          status: 'active',
+          limit: 1,
+        });
+        const subscription = subscriptions.data[0];
+        if (subscription) {
+          await stripe.subscriptions.update(subscription.id, {
+            items: [{
+              id: subscription.items.data[0].id,
+              quantity: newTotal,
+            }],
+          });
+        }
+      }
 
       return NextResponse.json({ success: true });
     }
