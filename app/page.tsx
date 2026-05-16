@@ -23,6 +23,7 @@ import { AnalysisResult, WritingContext } from '@/lib/types';
 import ShareCard from '@/components/ShareCard';
 import { supabase } from '@/lib/supabase';
 import AuthModal from '@/components/AuthModal';
+import Link from 'next/link';
 
 
 export default function Home() {
@@ -333,6 +334,58 @@ if (!user) {
         </motion.div>
       </section>
 
+      {/* What makes Pause different */}
+<section className="max-w-3xl mx-auto px-4 py-12">
+  <motion.div
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ delay: 0.35 }}
+    className="bg-white/90 rounded-3xl p-8 shadow-lg border border-stone-200"
+  >
+    <h2 className="text-2xl font-playfair font-bold text-stone-950 mb-6 text-center">
+      What makes Pause different
+    </h2>
+    <div className="grid md:grid-cols-2 gap-6">
+      <div className="flex gap-3">
+        <span className="text-teal-600 text-lg mt-0.5">🎯</span>
+        <div>
+          <p className="font-semibold text-stone-800 mb-1">Purpose‑built, not a chatbot</p>
+          <p className="text-stone-600 text-sm">
+            No prompts, no instructions. Paste your draft and get structured results instantly. Pause knows exactly what to look for.
+          </p>
+        </div>
+      </div>
+      <div className="flex gap-3">
+        <span className="text-teal-600 text-lg mt-0.5">📊</span>
+        <div>
+          <p className="font-semibold text-stone-800 mb-1">Real metrics, not vague advice</p>
+          <p className="text-stone-600 text-sm">
+            A regret probability score, emotional tone shift detection, and concrete rephrasing suggestions you can send immediately.
+          </p>
+        </div>
+      </div>
+      <div className="flex gap-3">
+        <span className="text-teal-600 text-lg mt-0.5">🔒</span>
+        <div>
+          <p className="font-semibold text-stone-800 mb-1">Private by design</p>
+          <p className="text-stone-600 text-sm">
+            Your text is never stored unless you save it. No one reads your messages. No data used for training.
+          </p>
+        </div>
+      </div>
+      <div className="flex gap-3">
+        <span className="text-teal-600 text-lg mt-0.5">🚀</span>
+        <div>
+          <p className="font-semibold text-stone-800 mb-1">Free to start, scales with you</p>
+          <p className="text-stone-600 text-sm">
+            3 free analyses per day. Pro and Team plans unlock unlimited use, history, exports, and progress tracking.
+          </p>
+        </div>
+      </div>
+    </div>
+  </motion.div>
+</section>
+
       
 
       {/* Demo / GIF placeholder */}
@@ -358,25 +411,42 @@ if (!user) {
         </motion.div>
       </section>
 
-      {/* Testimonial */}
-      <section className="max-w-4xl mx-auto px-4 py-12">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
+      {/* Testimonials */}
+<section className="max-w-4xl mx-auto px-4 py-12">
+  <motion.div
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ delay: 0.4 }}
+  >
+    <h2 className="text-2xl font-playfair font-bold text-center text-stone-950 mb-8">
+      What users are saying
+    </h2>
+    <div className="grid md:grid-cols-2 gap-6">
+      <blockquote className="bg-white/90 rounded-3xl p-6 shadow-lg border border-stone-200">
+        <p className="text-stone-600 italic mb-4">
+          &ldquo;Pause caught a passive‑aggressive tone I didn&rsquo;t even realise I had.
+          My draft went from a career‑limiting grenade to a professional email in one click.
+          It&rsquo;s like having a communication coach on speed dial.&rdquo;
+        </p>
+        <cite className="text-stone-500 not-italic text-sm">
+          — Maria Q., A very relieved Product Manager
+        </cite>
+      </blockquote>
+
+      <div className="bg-white/90 rounded-3xl p-6 shadow-lg border border-stone-200 flex flex-col items-center justify-center text-center">
+        <p className="text-stone-500 text-sm mb-3">
+          Have a story about how Pause saved you from a regrettable message?
+        </p>
+        <Link
+          href="/contact"
+          className="text-teal-600 hover:text-teal-700 font-medium text-sm"
         >
-          <blockquote className="bg-white/80 rounded-3xl p-8 md:p-10 shadow-xl border border-stone-200 text-center">
-            <p className="text-lg text-stone-600 italic mb-4">
-              &ldquo;Pause caught a passive‑aggressive tone I didn&rsquo;t even realise I had.
-              My draft went from a career‑limiting grenade to a professional email in one click.
-              It&rsquo;s like having a communication coach on speed dial.&rdquo;
-            </p>
-            <cite className="text-stone-500 not-italic">
-              — A very relieved Product Manager
-            </cite>
-          </blockquote>
-        </motion.div>
-      </section>
+          Share your story →
+        </Link>
+      </div>
+    </div>
+  </motion.div>
+</section>
 
       {/* Final CTA */}
       <section className="text-center pb-20 px-4">
