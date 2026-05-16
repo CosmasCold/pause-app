@@ -570,6 +570,15 @@ if (!user) {
                 {getScoreMessage(analysis.regretScore)}
               </p>
 
+{/* Share prompt for high regret */}
+{analysis.regretScore >= 60 && (
+  <div className="mt-4 flex items-center gap-3 p-3 bg-amber-50 border border-amber-200 rounded-xl">
+    <p className="text-sm text-amber-800 font-medium">
+      This message scored {analysis.regretScore}% regret probability. Share this result?
+    </p>
+  </div>
+)}
+
               <div className="flex gap-4 mt-4">
   <button
     onClick={() => setShowShare(true)}
