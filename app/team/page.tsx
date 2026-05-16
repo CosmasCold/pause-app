@@ -14,6 +14,7 @@ import {
   BarChart3,
   Settings,
   Mail,
+  Edit3,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import toast from 'react-hot-toast';
@@ -46,6 +47,7 @@ export default function TeamPage() {
   const [userTier, setUserTier] = useState<string | null>(null);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [seatsTotal, setSeatsTotal] = useState(10);
 
   const isOwner = currentUserId && team ? team.created_by === currentUserId : false;
 
@@ -82,6 +84,7 @@ export default function TeamPage() {
         if (data.team) {
           setTeam(data.team);
           setMembers(data.members || []);
+          setSeatsTotal(data.team.seats_total || 10);
         } else {
           setTeam(null);
         }
@@ -107,7 +110,7 @@ export default function TeamPage() {
       const response = await fetch('/api/team/manage', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'create', teamName, userId: user?.id }),
+        body: JSON.stringify({ action: 'create', teamName, userId: user?.id, seatsTotal }),
       });
       const data = await response.json();
       setIsCreating(false);
@@ -204,6 +207,34 @@ export default function TeamPage() {
     }
   };
 
+  const handleUpdateSeats = async () => {
+    const newTotalStr = prompt('Enter new seat total:', String(team?.seats_total || 10));
+    if (!newTotalStr) return;
+    const newTotal = parseInt(newTotalStr, 10);
+    if (isNaN(newTotal) || newTotal < (members.length || 1)) {
+      toast.error('Seat count must be at least the current number of members');
+      return;
+    }
+    try {
+      const user = (await supabase.auth.getUser()).data.user;
+      const response = await fetch('/api/team/manage', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'update-seats', userId: user?.id, seatsTotal: newTotal }),
+      });
+      const data = await response.json();
+      if (data.success) {
+        setTeam((prev) => prev ? { ...prev, seats_total: newTotal } : null);
+        setSeatsTotal(newTotal);
+        toast.success('Seats updated');
+      } else {
+        toast.error(data.error || 'Failed');
+      }
+    } catch {
+      toast.error('Could not reach server');
+    }
+  };
+
   // ── RENDER: Loading ──
   if (loading) {
     return (
@@ -282,8 +313,21 @@ export default function TeamPage() {
               <p className="text-stone-700 text-sm">You&apos;re on the Team plan. Set up your team to start collaborating.</p>
             </div>
             <div className="space-y-4">
-              <label className="block text-sm font-medium text-stone-700">Team Name</label>
-              <input type="text" value={teamName} onChange={(e) => setTeamName(e.target.value)} placeholder="Enter team name" className="w-full px-4 py-3 border-2 border-stone-200 rounded-2xl focus:outline-none focus:border-teal-500 text-stone-700" />
+              <div>
+                <label className="block text-sm font-medium text-stone-700 mb-2">Team Name</label>
+                <input type="text" value={teamName} onChange={(e) => setTeamName(e.target.value)} placeholder="Enter team name" className="w-full px-4 py-3 border-2 border-stone-200 rounded-2xl focus:outline-none focus:border-teal-500 text-stone-700" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-stone-700 mb-2">Number of Seats</label>
+                <input
+                  type="number"
+                  value={seatsTotal}
+                  onChange={(e) => setSeatsTotal(parseInt(e.target.value, 10) || 10)}
+                  min={1}
+                  max={100}
+                  className="w-full px-4 py-3 border-2 border-stone-200 rounded-2xl focus:outline-none focus:border-teal-500 text-stone-700"
+                />
+              </div>
               <button onClick={handleCreateTeam} disabled={isCreating || !teamName.trim()} className="w-full bg-teal-500 text-white py-3 rounded-2xl font-medium hover:bg-teal-600 disabled:opacity-50 transition-colors">
                 {isCreating ? 'Creating...' : 'Create Team'}
               </button>
@@ -326,6 +370,22 @@ export default function TeamPage() {
               )}
             </div>
           </div>
+
+          {/* Seat management for owner */}
+          {isOwner && (
+            <div className="p-4 bg-stone-50 rounded-xl flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-stone-700">Seats</p>
+                <p className="text-xs text-stone-500">{team.seats_total} total, {team.seats_used} used</p>
+              </div>
+              <button
+                onClick={handleUpdateSeats}
+                className="flex items-center gap-1 text-teal-600 hover:text-teal-700 text-sm font-medium"
+              >
+                <Edit3 className="w-3 h-3" /> Update
+              </button>
+            </div>
+          )}
         </motion.div>
 
         {/* Add member – OWNER ONLY */}

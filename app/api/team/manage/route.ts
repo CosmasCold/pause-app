@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { action, teamName, memberEmail, userId } = body;
+    const { action, teamName, memberEmail, userId, seatsTotal } = body;
 
     if (!userId) {
       return NextResponse.json({ error: 'Missing userId' }, { status: 400 });
@@ -73,12 +73,14 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Team tier required' }, { status: 403 });
       }
 
+      const seatCount = seatsTotal || 10; // Default 10 if not provided
+
       const { data: team, error: createError } = await supabaseAdmin
         .from('teams')
         .insert({
           name: teamName,
           created_by: userId,
-          seats_total: 10,
+          seats_total: seatCount,
           seats_used: 1,
         })
         .select()
@@ -206,7 +208,6 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'You are not the team owner' }, { status: 403 });
       }
 
-      
       const inviteUrl = `https://pauseapp.space/?teamId=${team.id}&email=${encodeURIComponent(memberEmail)}`;
 
       const resendKey = process.env.RESEND_API_KEY;
@@ -215,43 +216,77 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Email service not configured' }, { status: 500 });
       }
 
-      const response = await fetch('https://api.resend.com/emails', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${resendKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          from: 'Pause Team <noreply@pauseapp.space>',
-          to: memberEmail,
-          subject: `You've been invited to join "${team.name}" on Pause`,
-          html: `
-            <div style="max-width:600px;margin:0 auto;font-family:sans-serif">
-              <div style="background:#0d9488;padding:24px;border-radius:12px 12px 0 0;text-align:center">
-                <h1 style="color:white;margin:0">⏸️ Pause</h1>
+      try {
+        const response = await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${resendKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            from: 'Pause Team <noreply@pauseapp.space>',
+            to: memberEmail,
+            subject: `You've been invited to join "${team.name}" on Pause`,
+            html: `
+              <div style="max-width:600px;margin:0 auto;font-family:sans-serif">
+                <div style="background:#0d9488;padding:24px;border-radius:12px 12px 0 0;text-align:center">
+                  <h1 style="color:white;margin:0">⏸️ Pause</h1>
+                </div>
+                <div style="background:white;padding:32px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 12px 12px">
+                  <h2 style="color:#1c1917">You've been invited to join "${team.name}"</h2>
+                  <p style="color:#57534e;line-height:1.6">
+                    Click the button below to accept the invitation. If you already have a Pause account, you'll be added to the team automatically. If not, you'll create a free account and then join the team.
+                  </p>
+                  <a href="${inviteUrl}" style="display:inline-block;background:#0d9488;color:white;padding:14px 32px;border-radius:12px;text-decoration:none;font-weight:600;margin:16px 0">
+                    Accept Invitation
+                  </a>
+                  <p style="color:#a8a29e;font-size:12px;margin-top:24px">
+                    If you didn't expect this invitation, you can safely ignore this email.
+                  </p>
+                </div>
               </div>
-              <div style="background:white;padding:32px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 12px 12px">
-                <h2 style="color:#1c1917">You've been invited to join "${team.name}"</h2>
-                <p style="color:#57534e;line-height:1.6">
-                  Click the button below to accept the invitation. If you already have a Pause account, you'll be added to the team automatically. If not, you'll create a free account and then join the team.
-                </p>
-                <a href="${inviteUrl}" style="display:inline-block;background:#0d9488;color:white;padding:14px 32px;border-radius:12px;text-decoration:none;font-weight:600;margin:16px 0">
-                  Accept Invitation
-                </a>
-                <p style="color:#a8a29e;font-size:12px;margin-top:24px">
-                  If you didn't expect this invitation, you can safely ignore this email.
-                </p>
-              </div>
-            </div>
-          `,
-        }),
-      });
+            `,
+          }),
+        });
 
-      if (!response.ok) {
-        const errText = await response.text();
-        console.error('Resend error:', response.status, errText);
-        return NextResponse.json({ error: 'Failed to send invite email' }, { status: 500 });
+        if (!response.ok) {
+          const errText = await response.text();
+          console.error('Resend error:', response.status, errText);
+          return NextResponse.json({ error: 'Failed to send invite email' }, { status: 500 });
+        }
+
+        return NextResponse.json({ success: true });
+      } catch (error) {
+        console.error('Invite error:', error);
+        return NextResponse.json({ error: 'Failed to send invite' }, { status: 500 });
       }
+    }
+
+    // ================== UPDATE SEATS ==================
+    if (action === 'update-seats') {
+      const newTotal = seatsTotal;
+      if (!newTotal || isNaN(newTotal) || newTotal < 1) {
+        return NextResponse.json({ error: 'Invalid seat count' }, { status: 400 });
+      }
+
+      const { data: team } = await supabaseAdmin
+        .from('teams')
+        .select('*')
+        .eq('created_by', userId)
+        .single();
+
+      if (!team) {
+        return NextResponse.json({ error: 'Not the team owner' }, { status: 403 });
+      }
+
+      if (newTotal < team.seats_used) {
+        return NextResponse.json({ error: 'Cannot set seats below current member count' }, { status: 400 });
+      }
+
+      await supabaseAdmin
+        .from('teams')
+        .update({ seats_total: newTotal })
+        .eq('id', team.id);
 
       return NextResponse.json({ success: true });
     }
