@@ -46,11 +46,12 @@ const plans = [
   },
   {
   name: 'Team',
-  price: '$19',
-  period: 'per month',
-  description: 'For organizations and teams',
+  price: '$2',
+  period: 'per seat/month',
+  description: 'For organizations and teams (min 5 seats)',
   features: [
-    'Up to 10 team members',
+    'Per‑seat billing ($2/seat/month)',
+    'Minimum 5 seats',
     'Everything in Pro',
     'Team analytics dashboard',
     'Admin controls',

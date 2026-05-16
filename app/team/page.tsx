@@ -47,7 +47,9 @@ export default function TeamPage() {
   const [userTier, setUserTier] = useState<string | null>(null);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [seatsTotal, setSeatsTotal] = useState(10);
+  const [seatsTotal, setSeatsTotal] = useState(5);
+  const [showSeatsModal, setShowSeatsModal] = useState(false);
+  const [newSeatCount, setNewSeatCount] = useState(0);
 
   const isOwner = currentUserId && team ? team.created_by === currentUserId : false;
 
@@ -84,7 +86,7 @@ export default function TeamPage() {
         if (data.team) {
           setTeam(data.team);
           setMembers(data.members || []);
-          setSeatsTotal(data.team.seats_total || 10);
+          setSeatsTotal(data.team.seats_total || 5);
         } else {
           setTeam(null);
         }
@@ -96,7 +98,7 @@ export default function TeamPage() {
     }
   }, []);
 
-    useEffect(() => {
+  useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchTeam();
   }, [fetchTeam]);
@@ -207,34 +209,6 @@ export default function TeamPage() {
     }
   };
 
-  const handleUpdateSeats = async () => {
-    const newTotalStr = prompt('Enter new seat total:', String(team?.seats_total || 10));
-    if (!newTotalStr) return;
-    const newTotal = parseInt(newTotalStr, 10);
-    if (isNaN(newTotal) || newTotal < (members.length || 1)) {
-      toast.error('Seat count must be at least the current number of members');
-      return;
-    }
-    try {
-      const user = (await supabase.auth.getUser()).data.user;
-      const response = await fetch('/api/team/manage', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'update-seats', userId: user?.id, seatsTotal: newTotal }),
-      });
-      const data = await response.json();
-      if (data.success) {
-        setTeam((prev) => prev ? { ...prev, seats_total: newTotal } : null);
-        setSeatsTotal(newTotal);
-        toast.success('Seats updated');
-      } else {
-        toast.error(data.error || 'Failed');
-      }
-    } catch {
-      toast.error('Could not reach server');
-    }
-  };
-
   // ── RENDER: Loading ──
   if (loading) {
     return (
@@ -318,12 +292,12 @@ export default function TeamPage() {
                 <input type="text" value={teamName} onChange={(e) => setTeamName(e.target.value)} placeholder="Enter team name" className="w-full px-4 py-3 border-2 border-stone-200 rounded-2xl focus:outline-none focus:border-teal-500 text-stone-700" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-stone-700 mb-2">Number of Seats</label>
+                <label className="block text-sm font-medium text-stone-700 mb-2">Number of Seats (min. 5)</label>
                 <input
                   type="number"
                   value={seatsTotal}
-                  onChange={(e) => setSeatsTotal(parseInt(e.target.value, 10) || 10)}
-                  min={1}
+                  onChange={(e) => setSeatsTotal(parseInt(e.target.value, 10) || 5)}
+                  min={5}
                   max={100}
                   className="w-full px-4 py-3 border-2 border-stone-200 rounded-2xl focus:outline-none focus:border-teal-500 text-stone-700"
                 />
@@ -379,7 +353,10 @@ export default function TeamPage() {
                 <p className="text-xs text-stone-500">{team.seats_total} total, {team.seats_used} used</p>
               </div>
               <button
-                onClick={handleUpdateSeats}
+                onClick={() => {
+                  setNewSeatCount(team.seats_total);
+                  setShowSeatsModal(true);
+                }}
                 className="flex items-center gap-1 text-teal-600 hover:text-teal-700 text-sm font-medium"
               >
                 <Edit3 className="w-3 h-3" /> Update
@@ -440,6 +417,68 @@ export default function TeamPage() {
             )}
           </div>
         </motion.div>
+
+        {/* Seats modal (only for owner) */}
+        {showSeatsModal && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl"
+            >
+              <h3 className="text-lg font-playfair font-bold text-stone-800 mb-4">Update Seats</h3>
+              <label className="block text-sm font-medium text-stone-700 mb-2">
+                Number of seats (minimum 5)
+              </label>
+              <input
+                type="number"
+                value={newSeatCount}
+                onChange={(e) => setNewSeatCount(parseInt(e.target.value, 10) || 0)}
+                min={5}
+                max={100}
+                className="w-full px-4 py-3 border-2 border-stone-200 rounded-2xl focus:outline-none focus:border-teal-500 text-stone-700 mb-4"
+              />
+              <div className="flex gap-3 justify-end">
+                <button
+                  onClick={() => setShowSeatsModal(false)}
+                  className="px-4 py-2 rounded-2xl text-stone-600 hover:bg-stone-50 transition-colors text-sm"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={async () => {
+                    if (newSeatCount < 5) {
+                      toast.error('Minimum 5 seats required');
+                      return;
+                    }
+                    try {
+                      const user = (await supabase.auth.getUser()).data.user;
+                      const res = await fetch('/api/team/manage', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ action: 'update-seats', userId: user?.id, seatsTotal: newSeatCount }),
+                      });
+                      const data = await res.json();
+                      if (data.success) {
+                        setTeam((prev) => prev ? { ...prev, seats_total: newSeatCount } : null);
+                        setSeatsTotal(newSeatCount);
+                        toast.success('Seats updated');
+                        setShowSeatsModal(false);
+                      } else {
+                        toast.error(data.error || 'Failed');
+                      }
+                    } catch {
+                      toast.error('Could not reach server');
+                    }
+                  }}
+                  className="bg-teal-500 text-white px-4 py-2 rounded-2xl font-medium hover:bg-teal-600 text-sm"
+                >
+                  Save
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
       </main>
     </>
   );
