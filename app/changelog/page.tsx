@@ -2,6 +2,24 @@ import Navigation from '@/components/Navigation';
 import Link from 'next/link';
 
 const updates = [
+    {
+    date: '2026-05-16',
+    title: 'Security hardening',
+    description:
+      'Added rate limiting to the analyze endpoint, deployed a Content Security Policy header, and upgraded dependencies to fix vulnerabilities found by Snyk and npm audit.',
+  },
+  {
+    date: '2026-05-16',
+    title: 'Custom team sizes and per‑seat billing',
+    description:
+      'Teams can now be created with any number of seats (minimum 5). Billing is per seat per month. Team owners can update seat counts anytime from the team page.',
+  },
+  {
+    date: '2026-05-16',
+    title: 'Polished seat management UI',
+    description:
+      'Replaced the browser prompt for updating seats with a proper Pause‑styled modal.',
+  },
   {
     date: '2026-05-15',
     title: 'Revised color palette',
