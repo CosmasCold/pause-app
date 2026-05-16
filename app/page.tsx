@@ -571,50 +571,41 @@ if (!user) {
               </p>
 
               <div className="flex gap-4 mt-4">
-                {analysis.regretScore >= 60 && (
-  <p className="mt-4 text-sm text-amber-600 font-medium">
-    This message scored {analysis.regretScore}% regret probability. Share this result?
-  </p>
-)}
-<button
-  onClick={() => setShowShare(true)}
-  className={`mt-2 flex items-center gap-2 transition-colors font-medium ${
-    analysis.regretScore >= 60
-      ? 'bg-amber-100 text-amber-800 px-4 py-2 rounded-2xl hover:bg-amber-200'
-      : 'text-teal-600 hover:text-teal-700'
-  }`}
->
-  <Share2 className="w-4 h-4" />
-  {analysis.regretScore >= 60 ? 'Share this result' : 'Share your Pause'}
-</button>
+  <button
+    onClick={() => setShowShare(true)}
+    className="flex items-center gap-2 text-teal-600 hover:text-teal-700 transition-colors font-medium text-sm"
+  >
+    <Share2 className="w-4 h-4" />
+    Share
+  </button>
 
-                <button
-                  onClick={handleSaveAnalysis}
-                  disabled={isSaving || isSaved}
-                  className={`flex items-center gap-2 text-sm font-medium transition-colors ${
-                    isSaved
-                      ? 'text-teal-500 cursor-default'
-                      : 'text-teal-600 hover:text-teal-700'
-                  }`}
-                >
-                  {isSaving ? (
-                    <>
-                      <RefreshCw className="w-4 h-4 animate-spin" />
-                      Saving...
-                    </>
-                  ) : isSaved ? (
-                    <>
-                      <Check className="w-4 h-4" />
-                      Saved
-                    </>
-                  ) : (
-                    <>
-                      <Save className="w-4 h-4" />
-                      Save to History
-                    </>
-                  )}
-                </button>
-              </div>
+  <button
+    onClick={handleSaveAnalysis}
+    disabled={isSaving || isSaved}
+    className={`flex items-center gap-2 text-sm font-medium transition-colors ${
+      isSaved
+        ? 'text-teal-500 cursor-default'
+        : 'text-teal-600 hover:text-teal-700'
+    }`}
+  >
+    {isSaving ? (
+      <>
+        <RefreshCw className="w-4 h-4 animate-spin" />
+        Saving...
+      </>
+    ) : isSaved ? (
+      <>
+        <Check className="w-4 h-4" />
+        Saved
+      </>
+    ) : (
+      <>
+        <Save className="w-4 h-4" />
+        Save to History
+      </>
+    )}
+  </button>
+</div>
             </motion.div>
 
             {/* Emotional Tone */}
