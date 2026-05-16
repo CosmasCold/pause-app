@@ -15,6 +15,14 @@ const faqs = [
     a: 'Your text is never stored unless you explicitly choose to save it to your history. Free‑tier analyses run locally where possible. Pro‑tier analyses use a secure server‑side call, but no human ever reads your messages. We don’t use your data to train models.',
   },
   {
+    q: 'Is my data safe?',
+    a: 'Yes. All traffic is encrypted (HTTPS/TLS). Your messages are never stored unless you explicitly save them. We never read your messages, and we don’t use your data to train AI models. Authentication is handled by Google and Supabase — we never see or store your password. Payments are processed entirely by Stripe; we never have access to your credit card information.',
+  },
+  {
+    q: 'What happens to my text when I analyze it?',
+    a: 'The text is sent to Groq, a secure AI inference provider, for processing. Groq does not use customer data for training and deletes it after inference. No human reviews your messages.',
+  },
+  {
     q: 'What are cognitive biases, and why should I care?',
     a: 'Cognitive biases are mental shortcuts your brain takes. In writing, they show up as all‑or‑nothing language (“you always…”, “you never…”), mind reading (“you clearly think…”), labeling, catastrophizing, and more. They make your message feel hostile even when you didn’t intend it. Pause catches them before the recipient does.',
   },
@@ -24,7 +32,11 @@ const faqs = [
   },
   {
     q: 'Is there a team plan?',
-    a: 'Yes. The Team plan costs $19/month for up to 10 members. It includes everything in Pro plus a team analytics dashboard, admin controls, and the ability to add or remove members. Only the team owner can manage billing.',
+    a: 'Yes. The Team plan costs $2 per seat per month, with a minimum of 5 seats. It includes everything in Pro plus a team analytics dashboard, admin controls, and the ability to add or remove members. Only the team owner can manage billing. Seat counts can be updated anytime from the team page.',
+  },
+  {
+    q: 'How does the per‑seat Team billing work?',
+    a: 'Team plans are $2 per seat per month, with a minimum of 5 seats. You choose the number of seats when you create your team, and the owner can update it anytime. Stripe automatically bills the correct amount each month based on the seat count.',
   },
 ];
 
