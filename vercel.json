@@ -1,0 +1,17 @@
+﻿{
+  "crons": [
+    {
+      "path": "/api/cron/weekly-report",
+      "schedule": "0 9 * * 1"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/analyze",
+      "methods": ["POST"],
+      "headers": {
+        "Rate-Limit-Policy": "30r/m"
+      }
+    }
+  ]
+}
