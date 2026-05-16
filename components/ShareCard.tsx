@@ -183,10 +183,11 @@ export default function ShareCard({
             </div>
 
             <div className="flex justify-between items-center text-sm text-stone-600">
-              <span>
-                {biasesDetected} {biasesDetected === 1 ? 'bias' : 'biases'} detected
-              </span>
-            </div>
+  <span>
+    {biasesDetected} {biasesDetected === 1 ? 'bias' : 'biases'} detected
+  </span>
+  <span className="text-stone-400 text-xs">Analysed by Pause</span>
+</div>
           </div>
 
           <div className="grid grid-cols-2 gap-3 mt-6">

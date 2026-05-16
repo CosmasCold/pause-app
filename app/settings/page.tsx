@@ -101,7 +101,9 @@ function SettingsContent() {
         const result = await response.json();
         if (result.tier) {
           setProfile((prev) => (prev ? { ...prev, tier: result.tier } : prev));
-          toast.success(`Upgraded to ${result.tier}!`, { duration: 4000 });
+          toast.success(`Upgraded to ${result.tier}!`, {
+            style: { background: '#ecfdf5', color: '#059669', border: '1px solid #a7f3d0' },
+          });
         } else {
           toast.error('Could not confirm payment');
           router.replace('/settings');
@@ -131,7 +133,9 @@ function SettingsContent() {
       toast.error('Failed to update preference');
       setEmailReports(!newValue);
     } else {
-      toast.success(newValue ? 'Weekly reports enabled' : 'Weekly reports disabled');
+      toast.success(newValue ? 'Weekly reports enabled' : 'Weekly reports disabled', {
+        style: { background: '#ecfdf5', color: '#059669', border: '1px solid #a7f3d0' },
+      });
     }
   };
 
@@ -142,8 +146,13 @@ function SettingsContent() {
       .update({ name })
       .eq('id', (await supabase.auth.getUser()).data.user?.id);
     setSavingName(false);
-    if (error) toast.error('Failed to save name');
-    else toast.success('Name updated');
+    if (error) {
+      toast.error('Failed to save name');
+    } else {
+      toast.success('Name updated', {
+        style: { background: '#ecfdf5', color: '#059669', border: '1px solid #a7f3d0' },
+      });
+    }
   };
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -193,7 +202,9 @@ function SettingsContent() {
     } else {
       setProfile((prev) => (prev ? { ...prev, avatar_url: avatarUrl } : prev));
       setAvatarPreview(avatarUrl);
-      toast.success('Profile picture updated');
+      toast.success('Profile picture updated', {
+        style: { background: '#ecfdf5', color: '#059669', border: '1px solid #a7f3d0' },
+      });
     }
     setAvatarFile(null);
   };
@@ -266,7 +277,9 @@ function SettingsContent() {
         await supabase.from('saved_analyses').delete().eq('user_id', user.id);
         await supabase.from('user_profiles').delete().eq('id', user.id);
         await supabase.auth.signOut();
-        toast.success('Account deleted');
+        toast.success('Account deleted', {
+          style: { background: '#ecfdf5', color: '#059669', border: '1px solid #a7f3d0' },
+        });
         window.location.href = '/';
       }
     }
@@ -290,15 +303,15 @@ function SettingsContent() {
         <span className="text-sm font-medium">Back to Analyzer</span>
       </button>
 
-      <h1 className="text-4xl font-playfair font-bold text-stone-800 mb-8">Settings</h1>
+      <h1 className="text-4xl font-playfair font-bold text-stone-950 mb-8">Settings</h1>
 
       {/* Profile Section */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-white/90 rounded-3xl p-6 shadow-xl shadow-stone-300/40 border border-stone-300/50 mb-6"
+        className="bg-white/90 rounded-3xl p-6 shadow-lg shadow-stone-300/60 border border-stone-300/70 mb-6"
       >
-        <h2 className="text-lg font-semibold text-stone-800 mb-6 flex items-center gap-2">
+        <h2 className="text-lg font-semibold text-stone-950 mb-6 flex items-center gap-2">
           <Camera className="w-5 h-5 text-teal-600" />
           Profile
         </h2>
@@ -373,9 +386,9 @@ function SettingsContent() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
-        className="bg-white/90 rounded-3xl p-6 shadow-xl shadow-stone-300/40 border border-stone-300/50 mb-6"
+        className="bg-white/90 rounded-3xl p-6 shadow-lg shadow-stone-300/60 border border-stone-300/70 mb-6"
       >
-        <h2 className="text-lg font-semibold text-stone-800 mb-6 flex items-center gap-2">
+        <h2 className="text-lg font-semibold text-stone-950 mb-6 flex items-center gap-2">
           <UserIcon className="w-5 h-5 text-teal-600" />
           Account
         </h2>
@@ -448,9 +461,9 @@ function SettingsContent() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="bg-white/90 rounded-3xl p-6 shadow-xl shadow-stone-300/40 border border-stone-300/50 mb-6"
+          className="bg-white/90 rounded-3xl p-6 shadow-lg shadow-stone-300/60 border border-stone-300/70 mb-6"
         >
-          <h2 className="text-lg font-semibold text-stone-800 mb-6 flex items-center gap-2">
+          <h2 className="text-lg font-semibold text-stone-950 mb-6 flex items-center gap-2">
             <Bell className="w-5 h-5 text-teal-600" />
             Notifications
           </h2>
@@ -486,7 +499,7 @@ function SettingsContent() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
-        className="bg-white/90 rounded-3xl p-6 shadow-xl shadow-stone-300/40 border border-red-200/50 mb-6"
+        className="bg-white/90 rounded-3xl p-6 shadow-lg shadow-stone-300/60 border border-red-200/50 mb-6"
       >
         <h2 className="text-lg font-semibold text-red-600 mb-6 flex items-center gap-2">
           <Shield className="w-5 h-5" />

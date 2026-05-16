@@ -116,7 +116,9 @@ export default function HistoryPage() {
       .eq('id', id);
     if (!error) {
       setAnalyses(prev => prev.map(a => (a.id === id ? { ...a, is_favorite: !current } : a)));
-      toast.success(current ? 'Removed from favorites' : 'Added to favorites');
+      toast.success(current ? 'Removed from favorites' : 'Added to favorites', {
+        style: { background: '#ecfdf5', color: '#059669', border: '1px solid #a7f3d0' },
+      });
     }
   };
 
@@ -127,7 +129,9 @@ export default function HistoryPage() {
       .eq('id', id);
     if (!error) {
       setAnalyses(prev => prev.filter(a => a.id !== id));
-      toast.success('Deleted');
+      toast.success('Deleted', {
+        style: { background: '#ecfdf5', color: '#059669', border: '1px solid #a7f3d0' },
+      });
     }
   };
 
@@ -149,7 +153,9 @@ export default function HistoryPage() {
     link.href = url;
     link.download = `pause-history-${new Date().toISOString().split('T')[0]}.csv`;
     link.click();
-    toast.success('History exported!');
+    toast.success('History exported!', {
+      style: { background: '#ecfdf5', color: '#059669', border: '1px solid #a7f3d0' },
+    });
   };
 
   const downloadPDF = () => {
@@ -187,7 +193,7 @@ export default function HistoryPage() {
     });
 
   const scoreColor = (score: number) =>
-    score < 30 ? 'text-teal-600' : score < 60 ? 'text-amber-600' : 'text-red-600';
+    score < 30 ? 'text-emerald-600' : score < 60 ? 'text-amber-600' : 'text-red-600';
 
   const isPaid = userTier === 'pro' || userTier === 'team';
 
@@ -198,12 +204,12 @@ export default function HistoryPage() {
         <span className="text-sm font-medium">Back to Analyzer</span>
       </button>
 
-      <h1 className="text-4xl font-playfair font-bold text-stone-800 mb-8">History</h1>
+      <h1 className="text-4xl font-playfair font-bold text-stone-950 mb-8">History</h1>
 
       {/* ====== Progress Section (Pro/Team only, shown after loading) ====== */}
       {!loading && isPaid && (
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-10 bg-white/90 rounded-3xl p-6 shadow-xl shadow-stone-300/40 border border-stone-300/50">
-          <h2 className="text-xl font-playfair font-bold text-stone-800 mb-6">Your Progress</h2>
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-10 bg-white/90 rounded-3xl p-6 shadow-lg shadow-stone-300/60 border border-stone-300/70">
+          <h2 className="text-xl font-playfair font-bold text-stone-950 mb-6">Your Progress</h2>
 
           <div className="grid grid-cols-3 gap-4 mb-6">
             {[
@@ -213,7 +219,7 @@ export default function HistoryPage() {
             ].map(({ label, data }) => (
               <div key={label} className="text-center p-4 bg-stone-50 rounded-2xl">
                 <p className="text-xs text-stone-500 mb-1">{label}</p>
-                <p className={`text-2xl font-bold ${data.averageScore < 30 ? 'text-teal-600' : data.averageScore < 60 ? 'text-amber-600' : 'text-red-600'}`}>
+                <p className={`text-2xl font-bold ${data.averageScore < 30 ? 'text-emerald-600' : data.averageScore < 60 ? 'text-amber-600' : 'text-red-600'}`}>
                   {data.averageScore}%
                 </p>
                 <p className="text-xs text-stone-400 mt-1">{data.count} analyses</p>
@@ -243,10 +249,10 @@ export default function HistoryPage() {
 
       {/* ====== Upgrade prompt for free users (shown after loading) ====== */}
       {!loading && !isPaid && (
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-10 bg-white/90 rounded-3xl p-6 shadow-xl shadow-stone-300/40 border border-stone-300/50 text-center">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-10 bg-white/90 rounded-3xl p-6 shadow-lg shadow-stone-300/60 border border-stone-300/70 text-center">
           <TrendingUp className="w-8 h-8 text-teal-500 mx-auto mb-3" />
-          <h3 className="text-lg font-semibold text-stone-800 mb-2">Track your progress over time</h3>
-          <p className="text-stone-600 text-sm mb-4">
+          <h3 className="text-lg font-semibold text-stone-950 mb-2">Track your progress over time</h3>
+          <p className="text-stone-700 text-sm mb-4">
             Upgrade to Pro to see your regret score trend, most improved bias, and detailed communication patterns.
           </p>
           <Link href="/pricing" className="inline-block bg-teal-500 text-white px-5 py-2.5 rounded-2xl font-medium hover:bg-teal-600 transition-colors text-sm">
@@ -258,15 +264,15 @@ export default function HistoryPage() {
       {/* ====== Header with export buttons ====== */}
       <div className="flex justify-between items-center mb-8">
         <div>
-          <p className="text-stone-600">{analyses.length} analyses saved</p>
+          <p className="text-stone-700">{analyses.length} analyses saved</p>
         </div>
         <div className="flex gap-3">
           {isPaid && (
             <>
-              <button onClick={downloadPDF} className="flex items-center gap-2 px-4 py-2.5 bg-white/80 rounded-2xl border border-stone-300/50 hover:bg-white transition-colors text-stone-700">
+              <button onClick={downloadPDF} className="flex items-center gap-2 px-4 py-2.5 bg-white/90 rounded-2xl border border-stone-300/70 hover:bg-white transition-colors text-stone-700">
                 <FileText className="w-4 h-4" /> PDF
               </button>
-              <button onClick={exportHistory} className="flex items-center gap-2 px-4 py-2.5 bg-white/80 rounded-2xl border border-stone-300/50 hover:bg-white transition-colors text-stone-700">
+              <button onClick={exportHistory} className="flex items-center gap-2 px-4 py-2.5 bg-white/90 rounded-2xl border border-stone-300/70 hover:bg-white transition-colors text-stone-700">
                 <Download className="w-4 h-4" /> CSV
               </button>
             </>
@@ -276,7 +282,7 @@ export default function HistoryPage() {
               <TrendingUp className="w-4 h-4" /> Upgrade to Export
             </Link>
           )}
-          <button onClick={fetchHistory} className="p-2.5 bg-white/80 rounded-2xl border border-stone-300/50 hover:bg-white transition-colors">
+          <button onClick={fetchHistory} className="p-2.5 bg-white/90 rounded-2xl border border-stone-300/70 hover:bg-white transition-colors">
             <RefreshCw className="w-4 h-4 text-stone-600" />
           </button>
         </div>
@@ -286,9 +292,9 @@ export default function HistoryPage() {
       <div className="flex gap-4 mb-6">
         <div className="flex-1 relative">
           <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-stone-400" />
-          <input type="text" placeholder="Search analyses..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="w-full pl-10 pr-4 py-3 bg-white/80 rounded-2xl border border-stone-300/50 focus:outline-none focus:border-teal-500 transition-colors text-stone-700" />
+          <input type="text" placeholder="Search analyses..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="w-full pl-10 pr-4 py-3 bg-white/90 rounded-2xl border border-stone-300/70 focus:outline-none focus:border-teal-500 transition-colors text-stone-700" />
         </div>
-        <select value={contextFilter} onChange={e => setContextFilter(e.target.value)} className="px-4 py-3 bg-white/80 rounded-2xl border border-stone-300/50 focus:outline-none focus:border-teal-500 text-stone-700">
+        <select value={contextFilter} onChange={e => setContextFilter(e.target.value)} className="px-4 py-3 bg-white/90 rounded-2xl border border-stone-300/70 focus:outline-none focus:border-teal-500 text-stone-700">
           <option value="all">All Contexts</option>
           <option value="email">Email</option>
           <option value="message">Message</option>
@@ -296,7 +302,7 @@ export default function HistoryPage() {
           <option value="journal">Journal</option>
           <option value="essay">Essay</option>
         </select>
-        <select value={sortBy} onChange={e => setSortBy(e.target.value as 'date' | 'score')} className="px-4 py-3 bg-white/80 rounded-2xl border border-stone-300/50 focus:outline-none focus:border-teal-500 text-stone-700">
+        <select value={sortBy} onChange={e => setSortBy(e.target.value as 'date' | 'score')} className="px-4 py-3 bg-white/90 rounded-2xl border border-stone-300/70 focus:outline-none focus:border-teal-500 text-stone-700">
           <option value="date">Newest First</option>
           <option value="score">Lowest Score</option>
         </select>
@@ -309,13 +315,13 @@ export default function HistoryPage() {
         </div>
       ) : filteredAnalyses.length === 0 ? (
         <div className="text-center py-20">
-          <p className="text-stone-500 text-lg">No analyses found. Start analyzing some text!</p>
+          <p className="text-stone-600 text-lg">No analyses found. Start analyzing some text!</p>
           <Link href="/" className="mt-4 inline-block text-teal-600 hover:text-teal-700 font-medium">Go to analyzer →</Link>
         </div>
       ) : (
         <div className="space-y-4">
           {filteredAnalyses.map(analysis => (
-            <motion.div key={analysis.id} layout initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="bg-white/90 rounded-2xl border border-stone-300/50 overflow-hidden">
+            <motion.div key={analysis.id} layout initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="bg-white/90 rounded-2xl border border-stone-300/70 overflow-hidden">
               <div className="p-6">
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center gap-3">

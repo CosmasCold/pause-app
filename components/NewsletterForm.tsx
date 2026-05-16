@@ -36,7 +36,7 @@ export default function NewsletterForm() {
         One practical tip every Monday to help you write clearer, kinder messages.
       </p>
       {status === 'success' ? (
-        <p className="text-teal-600 font-medium">Thanks for subscribing!</p>
+        <p className="text-emerald-600 font-medium">Thanks for subscribing!</p>
       ) : (
         <form
           onSubmit={handleSubmit}

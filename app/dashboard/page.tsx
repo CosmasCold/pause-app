@@ -93,8 +93,8 @@ export default function DashboardPage() {
           </button>
           <div className="text-center max-w-md mx-auto">
             <AlertCircle className="w-12 h-12 text-amber-500 mx-auto mb-4" />
-            <h2 className="text-2xl font-playfair font-bold text-stone-800 mb-2">Team Plan Required</h2>
-            <p className="text-stone-600 mb-6">The Team Dashboard is exclusively for teams on the Team subscription.</p>
+            <h2 className="text-2xl font-playfair font-bold text-stone-950 mb-2">Team Plan Required</h2>
+            <p className="text-stone-700 mb-6">The Team Dashboard is exclusively for teams on the Team subscription.</p>
             <a href="/pricing" className="inline-block bg-teal-500 text-white px-6 py-3 rounded-2xl font-medium hover:bg-teal-600">View Plans</a>
           </div>
         </main>
@@ -112,21 +112,21 @@ export default function DashboardPage() {
           <span className="text-sm font-medium">Back to Team</span>
         </button>
 
-        <h1 className="text-4xl font-playfair font-bold text-stone-800 mb-8">Team Dashboard</h1>
+        <h1 className="text-4xl font-playfair font-bold text-stone-950 mb-8">Team Dashboard</h1>
 
         {/* KPI Cards */}
         <div className="grid md:grid-cols-3 gap-6 mb-12">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-white/90 rounded-3xl p-6 shadow-xl border border-stone-200">
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-white/90 rounded-3xl p-6 shadow-lg shadow-stone-300/60 border border-stone-300/70">
             <Users className="w-8 h-8 text-teal-500 mb-2" />
             <p className="text-3xl font-bold">{stats.members.length}</p>
             <p className="text-stone-500">Team Members</p>
           </motion.div>
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="bg-white/90 rounded-3xl p-6 shadow-xl border border-stone-200">
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="bg-white/90 rounded-3xl p-6 shadow-lg shadow-stone-300/60 border border-stone-300/70">
             <BarChart3 className="w-8 h-8 text-teal-500 mb-2" />
             <p className="text-3xl font-bold">{stats.totalAnalyses}</p>
             <p className="text-stone-500">Total Analyses</p>
           </motion.div>
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="bg-white/90 rounded-3xl p-6 shadow-xl border border-stone-200">
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="bg-white/90 rounded-3xl p-6 shadow-lg shadow-stone-300/60 border border-stone-300/70">
             <TrendingUp className="w-8 h-8 text-teal-500 mb-2" />
             <p className="text-3xl font-bold">{stats.averageRegretScore}%</p>
             <p className="text-stone-500">Avg. Regret Score</p>
@@ -135,8 +135,8 @@ export default function DashboardPage() {
 
         {/* Trends section */}
         {stats.trend && (stats.trend.recentCount > 0 || stats.trend.olderCount > 0) && (
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="bg-white/90 rounded-3xl p-6 shadow-xl border border-stone-200 mb-10">
-            <h2 className="text-xl font-playfair font-bold text-stone-800 mb-4 flex items-center gap-2">
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="bg-white/90 rounded-3xl p-6 shadow-lg shadow-stone-300/60 border border-stone-300/70 mb-10">
+            <h2 className="text-xl font-playfair font-bold text-stone-950 mb-4 flex items-center gap-2">
               <Activity className="w-5 h-5 text-teal-500" />
               Trends
             </h2>
@@ -148,8 +148,8 @@ export default function DashboardPage() {
                 <div className="flex items-center gap-2">
                   {stats.trend.changePercent > 0 ? (
                     <>
-                      <TrendingDown className="w-5 h-5 text-teal-600" />
-                      <span className="text-2xl font-bold text-teal-600">
+                      <TrendingDown className="w-5 h-5 text-emerald-600" />
+                      <span className="text-2xl font-bold text-emerald-600">
                         ↓ {stats.trend.changePercent}%
                       </span>
                     </>
@@ -194,10 +194,10 @@ export default function DashboardPage() {
         {/* Top Biases */}
         {stats.topBiases.length > 0 && (
           <div className="mb-12">
-            <h2 className="text-2xl font-playfair font-bold text-stone-800 mb-4">Most Common Biases</h2>
+            <h2 className="text-2xl font-playfair font-bold text-stone-950 mb-4">Most Common Biases</h2>
             <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
               {stats.topBiases.map((bias, i) => (
-                <div key={i} className="bg-white/90 rounded-2xl p-4 border border-stone-200 text-center">
+                <div key={i} className="bg-white/90 rounded-2xl p-4 border border-stone-300/70 text-center">
                   <p className="text-lg font-bold text-teal-600">{bias.count}</p>
                   <p className="text-sm text-stone-600">{bias.type}</p>
                 </div>
@@ -208,8 +208,8 @@ export default function DashboardPage() {
 
         {/* Member breakdown */}
         <div>
-          <h2 className="text-2xl font-playfair font-bold text-stone-800 mb-4">Member Activity</h2>
-          <div className="bg-white/90 rounded-3xl shadow-xl border border-stone-200 overflow-hidden">
+          <h2 className="text-2xl font-playfair font-bold text-stone-950 mb-4">Member Activity</h2>
+          <div className="bg-white/90 rounded-3xl shadow-lg shadow-stone-300/60 border border-stone-300/70 overflow-hidden">
             <table className="w-full">
               <thead className="bg-stone-50">
                 <tr>
@@ -226,7 +226,7 @@ export default function DashboardPage() {
                     </td>
                     <td className="p-4 text-stone-700">{member.analyses}</td>
                     <td className="p-4">
-                      <span className={member.avgScore < 30 ? 'text-teal-600' : member.avgScore < 60 ? 'text-amber-600' : 'text-red-600'}>
+                      <span className={member.avgScore < 30 ? 'text-emerald-600' : member.avgScore < 60 ? 'text-amber-600' : 'text-red-600'}>
                         {member.avgScore}%
                       </span>
                     </td>

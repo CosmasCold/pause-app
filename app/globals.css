@@ -14,3 +14,6 @@ input[type="reset"],
 [role="button"] {
   cursor: pointer;
 }
+h1, h2, h3, h4, .font-playfair {
+  color: #0c0a09;
+}
