@@ -90,19 +90,17 @@ export default function Page() {
             </p>
           </div>
 
-          <div className="mt-16 p-8 bg-gradient-to-r from-teal-50 to-emerald-50 rounded-3xl border border-teal-100 text-center">
-            <h3 className="text-xl font-playfair font-bold text-stone-800 mb-2">
-              Catch these biases before you hit send
-            </h3>
-            <p className="text-stone-600 mb-6">
-              Pause detects all 5 biases and gives you rephrasing suggestions instantly.
-            </p>
-            <Link
-              href="/"
-              className="inline-block bg-teal-500 text-white px-6 py-3 rounded-2xl font-medium hover:bg-teal-600 transition-colors shadow-lg shadow-teal-200/30"
-            >
-              Try Pause Free
-            </Link>
+                    {/* Internal links */}
+          <div className="mt-16 border-t border-stone-200 pt-8">
+            <div className="flex flex-wrap gap-4 text-sm">
+              <Link href="/blog" className="text-teal-600 hover:text-teal-700">
+                ← Back to Insights
+              </Link>
+              <span className="text-stone-300">|</span>
+              <Link href="/" className="text-teal-600 hover:text-teal-700">
+                Try Pause for free
+              </Link>
+            </div>
           </div>
         </article>
       </main>

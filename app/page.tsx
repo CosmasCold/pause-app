@@ -242,7 +242,9 @@ export default function Home() {
       toast.error(`Failed to save: ${error.message || error}`);
     } else {
       setIsSaved(true);
-      toast.success('Saved to history!');
+      toast.success('Saved to history!', {
+  style: { background: '#ecfdf5', color: '#059669', border: '1px solid #a7f3d0' },
+});
     }
     setIsSaving(false);
   };
@@ -569,13 +571,22 @@ if (!user) {
               </p>
 
               <div className="flex gap-4 mt-4">
-                <button
-                  onClick={() => setShowShare(true)}
-                  className="flex items-center gap-2 text-teal-600 hover:text-teal-700 transition-colors font-medium"
-                >
-                  <Share2 className="w-4 h-4" />
-                  Share
-                </button>
+                {analysis.regretScore >= 60 && (
+  <p className="mt-4 text-sm text-amber-600 font-medium">
+    This message scored {analysis.regretScore}% regret probability. Share this result?
+  </p>
+)}
+<button
+  onClick={() => setShowShare(true)}
+  className={`mt-2 flex items-center gap-2 transition-colors font-medium ${
+    analysis.regretScore >= 60
+      ? 'bg-amber-100 text-amber-800 px-4 py-2 rounded-2xl hover:bg-amber-200'
+      : 'text-teal-600 hover:text-teal-700'
+  }`}
+>
+  <Share2 className="w-4 h-4" />
+  {analysis.regretScore >= 60 ? 'Share this result' : 'Share your Pause'}
+</button>
 
                 <button
                   onClick={handleSaveAnalysis}
@@ -869,7 +880,7 @@ function getPlaceholder(context: WritingContext): string {
 }
 
 function getScoreColor(score: number): string {
-  if (score < 30) return '#0d9488';
+  if (score < 30) return '#059669';
   if (score < 60) return '#d97706';
   return '#dc2626';
 }
