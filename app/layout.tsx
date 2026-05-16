@@ -55,11 +55,12 @@ export default function RootLayout({
         <Navigation />
         <Toaster position="top-center" />
         <div className="pt-20 min-h-screen">{children}</div>
-        <footer className="border-t border-stone-200/60 bg-white/60 backdrop-blur-sm">
+        <footer className="border-t border-stone-300/70 bg-white/60 backdrop-blur-sm">
           <NewsletterForm />
           <div className="max-w-6xl mx-auto px-4 py-6 flex flex-wrap justify-between items-center text-sm text-stone-500">
             <span>© {new Date().getFullYear()} Pause. All rights reserved.</span>
             <div className="flex gap-6">
+              <Link href="/changelog" className="hover:text-stone-700">Changelog</Link>
               <Link href="/privacy" className="hover:text-stone-700">Privacy Policy</Link>
               <Link href="/terms" className="hover:text-stone-700">Terms of Service</Link>
               <Link href="/contact" className="hover:text-stone-700">Contact</Link>
