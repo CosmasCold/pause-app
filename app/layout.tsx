@@ -59,6 +59,7 @@ export default function RootLayout({
   <NewsletterForm />
   <div className="max-w-6xl mx-auto px-4 py-6 flex flex-wrap justify-between items-center text-sm text-stone-500">
     <div className="flex items-center gap-4">
+  <div className="flex flex-wrap items-center gap-4">
   <span>© {new Date().getFullYear()} Pause. All rights reserved.</span>
   <a
     href="https://www.saashub.com/the-pause-app?utm_source=badge&utm_campaign=badge&utm_content=the-pause-app&badge_variant=color&badge_kind=approved"
@@ -71,6 +72,19 @@ export default function RootLayout({
       style={{ maxWidth: '150px' }}
     />
   </a>
+  <a
+    href="https://startupfa.me/s/pause?utm_source=pauseapp.space"
+    target="_blank"
+    rel="noopener noreferrer"
+  >
+    <img
+      src="https://startupfa.me/badges/featured-badge.webp"
+      alt="Pause - Featured on Startup Fame"
+      width="171"
+      height="54"
+    />
+  </a>
+</div>
 </div>
     <div className="flex gap-6">
       <Link href="/changelog" className="hover:text-stone-700">Changelog</Link>
