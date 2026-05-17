@@ -58,7 +58,20 @@ export default function RootLayout({
         <footer className="border-t border-stone-200/60 bg-white/60 backdrop-blur-sm">
   <NewsletterForm />
   <div className="max-w-6xl mx-auto px-4 py-6 flex flex-wrap justify-between items-center text-sm text-stone-500">
-    <span>© {new Date().getFullYear()} Pause. All rights reserved.</span>
+    <div className="flex items-center gap-4">
+  <span>© {new Date().getFullYear()} Pause. All rights reserved.</span>
+  <a
+    href="https://www.saashub.com/the-pause-app?utm_source=badge&utm_campaign=badge&utm_content=the-pause-app&badge_variant=color&badge_kind=approved"
+    target="_blank"
+    rel="noopener noreferrer"
+  >
+    <img
+      src="https://cdn-b.saashub.com/img/badges/approved-color.png?v=1"
+      alt="PauseApp.space badge"
+      style={{ maxWidth: '150px' }}
+    />
+  </a>
+</div>
     <div className="flex gap-6">
       <Link href="/changelog" className="hover:text-stone-700">Changelog</Link>
       <Link href="/faq" className="hover:text-stone-700">FAQ</Link>
