@@ -84,6 +84,9 @@ export default function RootLayout({
       height="54"
     />
   </a>
+  <a href="https://aiagentsdirectory.com/agent/pause-app?utm_source=badge&utm_medium=referral&utm_campaign=free_listing&utm_content=pause-app" target="_blank" rel="noopener noreferrer">
+  <img src="https://aiagentsdirectory.com/featured-badge.svg?v=2024" alt="Pause App - Featured AI Agent on AI Agents Directory" width="200" height="50" />
+</a>
 </div>
 </div>
     <div className="flex gap-6">
