@@ -57,39 +57,41 @@ export default function RootLayout({
         <div className="pt-20 min-h-screen">{children}</div>
         <footer className="border-t border-stone-200/60 bg-white/60 backdrop-blur-sm">
   <NewsletterForm />
-  <div className="max-w-6xl mx-auto px-4 py-6 flex flex-wrap justify-between items-center text-sm text-stone-500">
-    <div className="flex items-center gap-4">
-  <div className="flex flex-wrap items-center gap-4">
-  <span>© {new Date().getFullYear()} Pause. All rights reserved.</span>
-  <a
-    href="https://www.saashub.com/the-pause-app?utm_source=badge&utm_campaign=badge&utm_content=the-pause-app&badge_variant=color&badge_kind=approved"
-    target="_blank"
-    rel="noopener noreferrer"
-  >
-    <img
-      src="https://cdn-b.saashub.com/img/badges/approved-color.png?v=1"
-      alt="PauseApp.space badge"
-      style={{ maxWidth: '150px' }}
-    />
-  </a>
-  <a
-    href="https://startupfa.me/s/pause?utm_source=pauseapp.space"
-    target="_blank"
-    rel="noopener noreferrer"
-  >
-    <img
-      src="https://startupfa.me/badges/featured-badge.webp"
-      alt="Pause - Featured on Startup Fame"
-      width="171"
-      height="54"
-    />
-  </a>
-  <a href="https://aiagentsdirectory.com/agent/pause-app?utm_source=badge&utm_medium=referral&utm_campaign=free_listing&utm_content=pause-app" target="_blank" rel="noopener noreferrer">
+  <div className="max-w-6xl mx-auto px-4 py-6 text-sm text-stone-500">
+    {/* Top row: copyright + badges */}
+    <div className="flex flex-wrap items-center justify-center gap-4 mb-4">
+      <span>© {new Date().getFullYear()} Pause. All rights reserved.</span>
+      <a
+        href="https://www.saashub.com/the-pause-app?utm_source=badge&utm_campaign=badge&utm_content=the-pause-app&badge_variant=color&badge_kind=approved"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        <img
+          src="https://cdn-b.saashub.com/img/badges/approved-color.png?v=1"
+          alt="PauseApp.space badge"
+          style={{ maxWidth: '150px' }}
+        />
+      </a>
+      <a
+        href="https://startupfa.me/s/pause?utm_source=pauseapp.space"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        <img
+          src="https://startupfa.me/badges/featured-badge.webp"
+          alt="Pause - Featured on Startup Fame"
+          width="171"
+          height="54"
+        />
+      </a>
+      
+      <a href="https://aiagentsdirectory.com/agent/pause-app?utm_source=badge&utm_medium=referral&utm_campaign=free_listing&utm_content=pause-app" target="_blank" rel="noopener noreferrer">
   <img src="https://aiagentsdirectory.com/featured-badge.svg?v=2024" alt="Pause App - Featured AI Agent on AI Agents Directory" width="200" height="50" />
 </a>
-</div>
-</div>
-    <div className="flex gap-6">
+    </div>
+
+    
+    <div className="flex flex-wrap justify-center gap-6">
       <Link href="/changelog" className="hover:text-stone-700">Changelog</Link>
       <Link href="/faq" className="hover:text-stone-700">FAQ</Link>
       <Link href="/privacy" className="hover:text-stone-700">Privacy Policy</Link>
