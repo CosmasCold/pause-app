@@ -17,6 +17,13 @@ export const metadata: Metadata = {
 
 const posts = [
   {
+    slug: 'how-to-give-feedback-without-sounding-harsh',
+    title: 'How to Give Feedback Without Sounding Harsh',
+    excerpt:
+      'Feedback shouldn’t feel like an attack. Learn how to separate the person from the behaviour so your feedback lands as helpful, not hostile.',
+    date: '2026-05-18',
+  },
+  {
     slug: 'why-we-regret-our-messages',
     title: 'Why We Regret Our Messages (and How to Stop)',
     excerpt:
