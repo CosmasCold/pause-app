@@ -6,7 +6,7 @@ import Navigation from '@/components/Navigation';
 import NewsletterForm from '@/components/NewsletterForm';
 import Link from 'next/link';
 import { Analytics } from '@vercel/analytics/react';
-import CanonicalLink from '@/components/CanonicalLink';
+
 
 const inter = Inter({
   subsets: ['latin'],
@@ -45,7 +45,7 @@ export default function RootLayout({
     <html lang="en" className={`${inter.variable} ${playfair.variable}`}>
       <head>
   <meta name="google-site-verification" content="CA6P_Ot-bfagJ0OuImO_OnVuZ6JrQNZx3s6Lj51PSdQ" />
-  <CanonicalLink />
+  
 </head>
       <body
         className="min-h-screen text-stone-700"
