@@ -13,5 +13,15 @@
         "Rate-Limit-Policy": "30r/m"
       }
     }
+  ],
+  "redirects": [
+    {
+      "source": "/",
+      "has": [
+        { "type": "query", "key": "ref", "value": "producthunt" }
+      ],
+      "destination": "/",
+      "permanent": true
+    }
   ]
 }
