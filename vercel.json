@@ -22,6 +22,14 @@
       ],
       "destination": "/",
       "permanent": true
+    },
+    {
+      "source": "/:path*",
+      "has": [
+        { "type": "host", "value": "www.pauseapp.space" }
+      ],
+      "destination": "https://pauseapp.space/:path*",
+      "permanent": true
     }
   ]
 }
