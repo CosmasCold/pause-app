@@ -1,5 +1,15 @@
 {
-  "indexNow": true,
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "indexnow"
+        }
+      ]
+    }
+  ],
   "crons": [
     {
       "path": "/api/cron/weekly-report",
