@@ -65,6 +65,10 @@ export default function PrivacyPage() {
             Each of these services has its own privacy policy, and we encourage you to review them.
           </p>
 
+          <p>
+  <strong>AI Processing:</strong> When you analyze a message, the text is sent to Groq for processing. Groq does not use customer data for training models and deletes it after inference. No human reviews your messages.
+</p>
+
           <h2>Your Rights</h2>
           <p>
             You can request deletion of your data at any time through your Settings page, or by
