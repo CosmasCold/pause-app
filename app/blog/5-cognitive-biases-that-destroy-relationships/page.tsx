@@ -3,13 +3,13 @@ import Link from 'next/link';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: '5 Cognitive Biases That Destroy Professional Relationships',
+  title: '5 Cognitive Biases That Destroy Professional Relationships – Pause',
   description:
-    'Mind reading, catastrophizing, and all‑or‑nothing thinking are more common in emails than you think. Learn how to spot them and steer your conversations back on track.',
+    'Mind reading, catastrophizing, and all‑or‑nothing thinking are more common in emails than you think. Learn how to spot them.',
   openGraph: {
     title: '5 Cognitive Biases That Destroy Professional Relationships',
     description:
-      'Mind reading, catastrophizing, and all‑or‑nothing thinking are more common in emails than you think. Learn how to spot them and steer your conversations back on track.',
+      'Mind reading, catastrophizing, and all‑or‑nothing thinking are more common in emails than you think. Learn how to spot them.',
     images: [{ url: '/logo.png', width: 512, height: 512 }],
   },
 };

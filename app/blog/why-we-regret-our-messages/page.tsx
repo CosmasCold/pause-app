@@ -3,13 +3,13 @@ import Link from 'next/link';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Why We Regret Our Messages (and How AI Can Help You Stop)',
+  title: 'Why We Regret Our Messages – Pause',
   description:
-    'Unchecked emotions and cognitive biases can turn a quick message into a lasting regret. Learn the science behind email regret and discover practical, AI‑powered strategies to tame your tone.',
+    'Discover the cognitive biases that lead to message regret and how AI‑powered analysis helps you communicate more clearly.',
   openGraph: {
-    title: 'Why We Regret Our Messages (and How AI Can Help You Stop)',
+    title: 'Why We Regret Our Messages',
     description:
-      'Unchecked emotions and cognitive biases can turn a quick message into a lasting regret. Learn the science behind email regret and discover practical, AI‑powered strategies to tame your tone.',
+      'Discover the cognitive biases that lead to message regret and how AI‑powered analysis helps you communicate more clearly.',
     images: [{ url: '/logo.png', width: 512, height: 512 }],
   },
 };

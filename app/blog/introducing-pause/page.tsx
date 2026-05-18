@@ -3,13 +3,13 @@ import Link from 'next/link';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Introducing Pause: The AI‑Powered Communication Coach for Your Inbox',
+  title: 'Introducing Pause – AI Communication Coach',
   description:
-    'Meet the AI that catches emotional tone, hidden assumptions, and regret‑triggering language before you hit send. Built to make your digital communications clearer, kinder, and more effective.',
+    'Meet Pause, the AI communication coach that catches emotional tone, cognitive biases, and hidden assumptions before you hit send.',
   openGraph: {
-    title: 'Introducing Pause: The AI‑Powered Communication Coach for Your Inbox',
+    title: 'Introducing Pause – AI Communication Coach',
     description:
-      'Meet the AI that catches emotional tone, hidden assumptions, and regret‑triggering language before you hit send. Built to make your digital communications clearer, kinder, and more effective.',
+      'Meet Pause, the AI communication coach that catches emotional tone, cognitive biases, and hidden assumptions before you hit send.',
     images: [{ url: '/logo.png', width: 512, height: 512 }],
   },
 };
