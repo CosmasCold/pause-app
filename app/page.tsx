@@ -409,8 +409,6 @@ if (!user) {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             {/* Demo video */}
 <video
-  autoPlay
-  loop
   muted
   playsInline
   controls
