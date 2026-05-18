@@ -1,5 +1,12 @@
 import Navigation from '@/components/Navigation';
 import Link from 'next/link';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Terms of Service – Pause',
+  description:
+    'Terms of service for using Pause, the AI communication coach. Includes acceptable use, subscription terms, and liability limitations.',
+};
 
 export default function TermsPage() {
   return (

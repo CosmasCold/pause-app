@@ -1,5 +1,12 @@
 import Navigation from '@/components/Navigation';
 import Link from 'next/link';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'FAQ – Pause',
+  description:
+    'Common questions about Pause: how it works, privacy, the regret score, team plans, cancellation, and more.',
+};
 
 const faqs = [
   {

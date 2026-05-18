@@ -24,6 +24,13 @@ import ShareCard from '@/components/ShareCard';
 import { supabase } from '@/lib/supabase';
 import AuthModal from '@/components/AuthModal';
 import Link from 'next/link';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Pause – AI Communication Coach',
+  description:
+    'Catch cognitive biases and emotional tone before you hit send. Get a regret probability score and rephrasing suggestions in seconds. Free plan available.',
+};
 
 
 export default function Home() {

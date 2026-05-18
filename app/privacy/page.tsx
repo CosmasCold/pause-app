@@ -1,5 +1,12 @@
 import Navigation from '@/components/Navigation';
 import Link from 'next/link';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Privacy Policy – Pause',
+  description:
+    'How Pause collects, uses, and protects your data. Your text is never stored unless you choose to save it. No human ever reads your messages.',
+};
 
 export default function PrivacyPage() {
   return (

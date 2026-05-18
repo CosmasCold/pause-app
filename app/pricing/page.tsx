@@ -9,6 +9,13 @@ import toast from 'react-hot-toast';
 import Navigation from '@/components/Navigation';
 import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Pricing – Pause',
+  description:
+    'Free plan: 3 analyses/day. Pro: $8/mo unlimited. Team: $2/seat/mo (min 5 seats). AI communication coach that catches tone and bias before you hit send.',
+};
 
 const plans = [
   {

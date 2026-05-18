@@ -1,5 +1,12 @@
 import Navigation from '@/components/Navigation';
 import Link from 'next/link';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'How to Give Feedback Without Sounding Harsh – Pause',
+  description:
+    'Learn to separate the person from the behaviour so your feedback lands as helpful, not hostile. Practical examples and a simple three‑step framework.',
+};
 
 export default function Page() {
   return (

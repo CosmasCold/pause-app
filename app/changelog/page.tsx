@@ -1,5 +1,12 @@
 import Navigation from '@/components/Navigation';
 import Link from 'next/link';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Changelog – Pause',
+  description:
+    'See what\'s new in Pause: security hardening, per‑seat team billing, seat management UI, progress tracking, and more.',
+};
 
 const updates = [
     {
