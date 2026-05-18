@@ -4,13 +4,7 @@
 import { useState } from 'react';
 import Navigation from '@/components/Navigation';
 import toast from 'react-hot-toast';
-import type { Metadata } from 'next';
 
-export const metadata: Metadata = {
-  title: 'Contact – Pause',
-  description:
-    'Get in touch with the founder of Pause, the AI communication coach. Questions, feedback, or support inquiries welcome.',
-};
 
 export default function ContactPage() {
   const [form, setForm] = useState({ name: '', email: '', message: '' });
