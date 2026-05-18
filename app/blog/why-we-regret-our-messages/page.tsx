@@ -128,6 +128,18 @@ export default function Page() {
             </p>
           </div>
 
+                    <div className="mt-8 bg-stone-50 rounded-2xl p-6">
+            <p className="text-sm font-semibold text-stone-700 mb-3">Read next</p>
+            <div className="space-y-2">
+              <Link href="/blog/how-to-give-feedback-without-sounding-harsh" className="block text-teal-700 hover:text-teal-800 text-sm">
+                How to Give Feedback Without Sounding Harsh →
+              </Link>
+              <Link href="/blog/5-cognitive-biases-that-destroy-relationships" className="block text-teal-700 hover:text-teal-800 text-sm">
+                5 Cognitive Biases That Destroy Professional Relationships →
+              </Link>
+            </div>
+          </div>
+
           {/* Footer CTA */}
           <div className="mt-16 p-8 bg-gradient-to-r from-teal-50 to-emerald-50 rounded-3xl border border-teal-100 text-center">
             <h3 className="text-xl font-playfair font-bold text-stone-800 mb-2">
