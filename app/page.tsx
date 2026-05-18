@@ -404,10 +404,21 @@ if (!user) {
             Here&apos;s what happens when you paste a heated email into Pause.
             The regret probability, biases, and suggestions appear instantly.
           </p>
-          {/* Placeholder for demo GIF or video */}
+          
           <div className="bg-stone-100 rounded-2xl p-10 text-stone-400 text-sm">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/demo.gif" alt="Pause in action" className="w-full h-auto rounded-2xl" />
+            {/* Demo video */}
+<video
+  autoPlay
+  loop
+  muted
+  playsInline
+  controls
+  className="w-full h-auto rounded-2xl"
+>
+  <source src="/commercial.mp4" type="video/mp4" />
+  Your browser does not support the video tag.
+</video>
           </div>
         </motion.div>
       </section>
