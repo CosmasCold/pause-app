@@ -1,4 +1,5 @@
 {
+  "indexNow": true,
   "crons": [
     {
       "path": "/api/cron/weekly-report",
