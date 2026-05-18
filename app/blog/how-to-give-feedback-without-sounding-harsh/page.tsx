@@ -104,26 +104,14 @@ export default function Page() {
           </div>
 
           {/* Internal links */}
-          <div className="mt-16 border-t border-stone-200 pt-8">
-            <div className="flex flex-wrap gap-4 text-sm">
-              <Link href="/blog" className="text-teal-700 hover:text-teal-800">
-                ← Back to Insights
-              </Link>
-              <span className="text-stone-300">|</span>
-              <Link href="/" className="text-teal-700 hover:text-teal-800">
-                Try Pause for free
-              </Link>
-            </div>
-          </div>
-
-          <div className="mt-8 bg-stone-50 rounded-2xl p-6">
+                    <div className="mt-8 bg-stone-50 rounded-2xl p-6">
             <p className="text-sm font-semibold text-stone-700 mb-3">Read next</p>
             <div className="space-y-2">
+              <Link href="/blog/introducing-pause" className="block text-teal-700 hover:text-teal-800 text-sm">
+                Introducing Pause: The AI‑Powered Communication Coach →
+              </Link>
               <Link href="/blog/why-we-regret-our-messages" className="block text-teal-700 hover:text-teal-800 text-sm">
                 Why We Regret Our Messages (and How to Stop) →
-              </Link>
-              <Link href="/blog/5-cognitive-biases-that-destroy-relationships" className="block text-teal-700 hover:text-teal-800 text-sm">
-                5 Cognitive Biases That Destroy Professional Relationships →
               </Link>
             </div>
           </div>
