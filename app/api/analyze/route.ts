@@ -3,38 +3,42 @@ import { NextRequest, NextResponse } from 'next/server';
 
 const GROQ_API_KEY = process.env.GROQ_API_KEY || '';
 
-const SYSTEM_PROMPT = `You are an expert communication coach. Analyze the text for tone, biases, assumptions, and regret probability.
+const SYSTEM_PROMPT = `You are an expert communication coach. Your job is to analyze a message and return a JSON object with the following fields. Do NOT use placeholder values like "string". Every field must contain real, thoughtful analysis.
 
-TONE must be exactly one of: neutral, concerned, frustrated, angry, appreciative, professional, mixed, sad.
-SHIFT must be exactly one of: stable, positive-to-negative, negative-to-positive, minimal.
-INTENSITY must be exactly one of: mild, moderate, intense.
+FIELDS:
 
-For messages containing insults, profanity, or direct attacks, regretScore MUST be at least 85.
+1. "biases" – an array of cognitive biases found in the text. Each bias must have:
+   - "type": one of "All-or-Nothing", "Mind Reading", "Catastrophizing", "Labeling", "Blaming", "Emotional Reasoning", "Personalization"
+   - "confidence": a number from 0 to 1
+   - "excerpt": the exact phrase from the text that shows this bias
+   - "explanation": a brief, plain-English explanation of why this is that bias
 
-"suggestedRephrases" must be 1-3 complete, ready-to-send replacement messages. They must be full sentences that express the user's underlying concern or frustration in a respectful, constructive way. Do NOT include generic advice like "Try saying…". Every suggestion must be a standalone message the user could copy-paste and send immediately. If the text is overtly hostile, rewrite it into a calm expression of the same core feeling.
+2. "emotionalTone" – an object with:
+   - "start": the tone of the opening (one of: neutral, concerned, frustrated, angry, appreciative, professional, mixed, sad)
+   - "middle": tone of the middle
+   - "end": tone of the closing
+   - "shift": one of: stable, positive-to-negative, negative-to-positive, minimal
+   - "intensity": one of: mild, moderate, intense
 
-IMPORTANT: If the input is repetitive nonsense (e.g., "vvvvvvv", "aaaaa", long strings of single characters, etc.), treat it as a neutral, non-harmful message with 0 regretScore, no biases, and intensity mild.
+3. "assumptions" – an array of assumptions the writer makes about the recipient. Each has:
+   - "text": the exact phrase
+   - "severity": one of: low, medium, high
 
-Respond ONLY with valid JSON (no markdown, no backticks):
+4. "regretScore" – a number from 0 to 100 representing how likely the sender is to regret sending this message.
 
-{
-  "biases": [
-    { "type": "string", "confidence": number (0-1), "excerpt": "exact phrase", "explanation": "brief" }
-  ],
-  "emotionalTone": {
-    "start": "tone",
-    "middle": "tone",
-    "end": "tone",
-    "shift": "shift",
-    "intensity": "intensity"
-  },
-  "assumptions": [
-    { "text": "exact phrase", "severity": "low, medium, or high" }
-  ],
-  "regretScore": number (0-100),
-  "suggestedRephrases": [ "complete replacement message", … ],
-  "reflectiveQuestion": "thought-provoking question"
-}`;
+   Use the FULL range. Do NOT default to 0 or 95. Here are guidelines:
+   - 0-10: Completely neutral, factual, or warm. No emotional charge.
+   - 10-25: Mild concern or slight frustration expressed politely.
+   - 25-45: Clear frustration or disappointment, but still professional.
+   - 45-65: Strong frustration, some accusatory language, or noticeable tension.
+   - 65-85: Hostile, aggressive, or insulting language.
+   - 85-100: Extreme hostility, profanity, direct personal attacks.
+
+5. "suggestedRephrases" – an array of 1-3 complete replacement messages. These must be full sentences the user could copy and send immediately. Do NOT give generic advice. If the original message is already fine, return an empty array.
+
+6. "reflectiveQuestion" – one thought-provoking question to help the user reconsider their message.
+
+Return ONLY valid JSON. No markdown, no backticks, no extra text.`;
 
 const PROFANITY =
   /\b(fuck|shit|asshole|bitch|bastard|dick|piss|cunt|motherfucker|douche|scumbag|moron|idiot|stupid|hate|worthless|useless|pathetic|garbage|trash|scum|kill yourself)\b/i;
@@ -95,6 +99,8 @@ export async function POST(request: NextRequest) {
           const data = await response.json();
           let content = data.choices[0].message.content.trim();
           content = content.replace(/```json\n?|```/g, '').trim();
+          console.log('RAW GROQ CONTENT:', content);
+aiResult = JSON.parse(content);
           aiResult = JSON.parse(content);
         } else {
           console.error('Groq API error:', await response.text());
