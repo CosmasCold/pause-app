@@ -48,9 +48,9 @@ export default function RootLayout({
       <body
         className="min-h-screen text-stone-700"
         style={{
-          background:
-            'linear-gradient(160deg, #f2ebd9 0%, #ebe1cc 20%, #dce8e2 50%, #d2e2d9 75%, #c5dbcf 100%)',
-        }}
+  background:
+    'linear-gradient(160deg, #f9f2e7 0%, #f3ead8 20%, #e8dccc 50%, #dce5d4 75%, #c9d9c5 100%)',
+}}
       >
         <Navigation />
         <Toaster position="top-center" />

@@ -4,7 +4,7 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 
-/* Show a hand cursor on all clickable elements */
+
 button,
 a,
 select,
@@ -15,5 +15,9 @@ input[type="reset"],
   cursor: pointer;
 }
 h1, h2, h3, h4, .font-playfair {
-  color: #0c0a09;
+  color: #1c1917; /* stone-900 */
+}
+
+body {
+  color: #292524; /* stone-800 */
 }

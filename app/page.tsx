@@ -280,7 +280,7 @@ if (!user) {
 
           <button
             onClick={() => setShowAuth(true)}
-            className="bg-teal-500 text-white px-10 py-4 rounded-2xl font-semibold text-lg hover:bg-teal-600 transition-colors shadow-xl shadow-teal-200/40 inline-flex items-center gap-2"
+            className="bg-teal-700 text-white px-10 py-4 rounded-2xl font-semibold text-lg hover:bg-teal-800 transition-colors shadow-xl shadow-teal-200/40 inline-flex items-center gap-2"
           >
             Get Started Free
             <ArrowRight className="w-5 h-5" />
@@ -347,7 +347,7 @@ if (!user) {
     </h2>
     <div className="grid md:grid-cols-2 gap-6">
       <div className="flex gap-3">
-        <span className="text-teal-600 text-lg mt-0.5">🎯</span>
+        <span className="text-teal-700 text-lg mt-0.5">🎯</span>
         <div>
           <p className="font-semibold text-stone-800 mb-1">Purpose‑built, not a chatbot</p>
           <p className="text-stone-600 text-sm">
@@ -356,7 +356,7 @@ if (!user) {
         </div>
       </div>
       <div className="flex gap-3">
-        <span className="text-teal-600 text-lg mt-0.5">📊</span>
+        <span className="text-teal-700 text-lg mt-0.5">📊</span>
         <div>
           <p className="font-semibold text-stone-800 mb-1">Real metrics, not vague advice</p>
           <p className="text-stone-600 text-sm">
@@ -365,7 +365,7 @@ if (!user) {
         </div>
       </div>
       <div className="flex gap-3">
-        <span className="text-teal-600 text-lg mt-0.5">🔒</span>
+        <span className="text-teal-700 text-lg mt-0.5">🔒</span>
         <div>
           <p className="font-semibold text-stone-800 mb-1">Private by design</p>
           <p className="text-stone-600 text-sm">
@@ -374,7 +374,7 @@ if (!user) {
         </div>
       </div>
       <div className="flex gap-3">
-        <span className="text-teal-600 text-lg mt-0.5">🚀</span>
+        <span className="text-teal-700 text-lg mt-0.5">🚀</span>
         <div>
           <p className="font-semibold text-stone-800 mb-1">Free to start, scales with you</p>
           <p className="text-stone-600 text-sm">
@@ -439,7 +439,7 @@ if (!user) {
         </p>
         <Link
           href="/contact"
-          className="text-teal-600 hover:text-teal-700 font-medium text-sm"
+          className="text-teal-700 hover:text-teal-700 font-medium text-sm"
         >
           Share your story →
         </Link>
@@ -452,7 +452,7 @@ if (!user) {
       <section className="text-center pb-20 px-4">
         <button
           onClick={() => setShowAuth(true)}
-          className="bg-teal-500 text-white px-10 py-4 rounded-2xl font-semibold text-lg hover:bg-teal-600 transition-colors shadow-xl shadow-teal-200/40 inline-flex items-center gap-2"
+          className="bg-teal-700 text-white px-10 py-4 rounded-2xl font-semibold text-lg hover:bg-teal-600 transition-colors shadow-xl shadow-teal-200/40 inline-flex items-center gap-2"
         >
           Get Started Free
           <ArrowRight className="w-5 h-5" />
@@ -495,7 +495,7 @@ if (!user) {
             onClick={() => setContext(ctx)}
             className={`px-5 py-2.5 rounded-full text-sm font-medium transition-all duration-200 ${
               context === ctx
-                ? 'bg-teal-500 text-white shadow-lg shadow-teal-200/50'
+                ? 'bg-teal-700 text-white shadow-lg shadow-teal-200/50'
                 : 'bg-white/80 text-stone-600 hover:bg-white border border-stone-300/60'
             }`}
           >
@@ -556,7 +556,7 @@ if (!user) {
                 ? 'bg-teal-400 text-white shadow-lg shadow-teal-200/40 cursor-wait'
                 : hasReachedLimit || isOverCharLimit
                 ? 'bg-stone-300 text-stone-500 cursor-not-allowed'
-                : 'bg-teal-500 text-white hover:bg-teal-600 shadow-lg shadow-teal-200/30'
+                : 'bg-teal-500 text-white hover:bg-teal-800 shadow-lg shadow-teal-200/30'
             } disabled:opacity-100`}
           >
             {isAnalyzing && (
@@ -652,7 +652,7 @@ if (!user) {
               <div className="flex gap-4 mt-4">
   <button
     onClick={() => setShowShare(true)}
-    className="flex items-center gap-2 text-teal-600 hover:text-teal-700 transition-colors font-medium text-sm"
+    className="flex items-center gap-2 text-teal-700 hover:text-teal-700 transition-colors font-medium text-sm"
   >
     <Share2 className="w-4 h-4" />
     Share
@@ -664,7 +664,7 @@ if (!user) {
     className={`flex items-center gap-2 text-sm font-medium transition-colors ${
       isSaved
         ? 'text-teal-500 cursor-default'
-        : 'text-teal-600 hover:text-teal-700'
+        : 'text-teal-700 hover:text-teal-700'
     }`}
   >
     {isSaving ? (
@@ -792,7 +792,7 @@ if (!user) {
                       <p className="text-stone-700">
                         &ldquo;{rephrase}&rdquo;
                       </p>
-                      <p className="text-xs text-teal-600 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <p className="text-xs text-teal-700 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
                         Click to apply &rarr;
                       </p>
                     </button>
@@ -882,7 +882,7 @@ function ResultsCard({
       className="bg-white/90 rounded-3xl p-8 shadow-xl shadow-stone-300/40 border border-stone-300/50"
     >
       <div className="flex items-center gap-3 mb-6">
-        <div className="text-teal-600">{icon}</div>
+        <div className="text-teal-700">{icon}</div>
         <h3 className="text-xl font-playfair font-bold text-stone-800">
           {title}
         </h3>
@@ -928,7 +928,7 @@ function FeatureCard({
 }) {
   return (
     <div className="p-8 bg-white/80 rounded-3xl border border-stone-300/50 hover:shadow-lg hover:shadow-stone-300/30 transition-shadow">
-      <div className="text-teal-600 mb-4">{icon}</div>
+      <div className="text-teal-700 mb-4">{icon}</div>
       <h3 className="font-semibold text-stone-700 mb-2">{title}</h3>
       <p className="text-stone-500 text-sm leading-relaxed">{description}</p>
     </div>
