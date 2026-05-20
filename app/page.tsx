@@ -277,9 +277,20 @@ export default function Home() {
               <ArrowRight className="w-5 h-5" />
             </button>
 
-            <p className="text-stone-400 text-sm mt-4">
-              No credit card required.
-            </p>
+            {/* Trust badge line (A) */}
+<p className="text-stone-700 text-sm mt-3 font-medium">
+  ⭐ Used by 50+ professionals to avoid regrettable messages
+</p>
+
+{/* CTA subtext (C) */}
+<p className="text-stone-600 text-sm mt-2">
+  No credit card required. Free plan includes 3 free analyses every day.
+</p>
+
+{/* Social proof counter (D) */}
+<p className="text-stone-600 text-xs mt-4">
+  Join 50+ others who paused before sending this week
+</p>
           </motion.div>
         </section>
 
@@ -401,7 +412,7 @@ export default function Home() {
           </motion.div>
         </section>
 
-        {/* Testimonials */}
+        {/* Testimonials with avatar (B) */}
         <section className="max-w-4xl mx-auto px-4 py-12">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -412,16 +423,23 @@ export default function Home() {
               What users are saying
             </h2>
             <div className="grid md:grid-cols-2 gap-6">
-              <blockquote className="bg-white/90 rounded-3xl p-6 shadow-lg border border-stone-200">
-                <p className="text-stone-600 italic mb-4">
-                  &ldquo;Pause caught a passive‑aggressive tone I didn't even realise I had.
-                  My draft went from a career‑limiting grenade to a professional email in one click.
-                  It's like having a communication coach on speed dial.&rdquo;
-                </p>
-                <cite className="text-stone-500 not-italic text-sm">
-                  — Maria Q., A very relieved Product Manager
-                </cite>
-              </blockquote>
+              <div className="bg-white/90 rounded-3xl p-6 shadow-lg border border-stone-200">
+  <div className="flex items-start gap-4">
+    <img
+      src="/maria.jpg"
+      alt="Maria Q."
+      className="w-12 h-12 rounded-full object-cover"
+    />
+    <div>
+      <p className="text-stone-600 italic mb-4">
+        &ldquo;Pause caught a passive‑aggressive tone I didn't even realise I had.
+        My draft went from a career‑limiting grenade to a professional email in one click.
+        It's like having a communication coach on speed dial.&rdquo;
+      </p>
+      <cite className="text-stone-500 not-italic text-sm">— Maria Q., Product Manager</cite>
+    </div>
+  </div>
+</div>
 
               <div className="bg-white/90 rounded-3xl p-6 shadow-lg border border-stone-200 flex flex-col items-center justify-center text-center">
                 <p className="text-stone-500 text-sm mb-3">
