@@ -21,3 +21,23 @@ h1, h2, h3, h4, .font-playfair {
 body {
   color: #292524; /* stone-800 */
 }
+
+/* Techy hex pattern background - behind all content, more visible */
+body {
+  position: relative;
+}
+
+body::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  min-height: 100%;
+  pointer-events: none;
+  z-index: -1;
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 115" width="100" height="115"><path d="M50 0 L93.3 28.9 L93.3 86.6 L50 115.5 L6.7 86.6 L6.7 28.9 Z" fill="none" stroke="rgba(178,242,187,0.7)" stroke-width="2"/><path d="M50 14.4 L75 29.9 L75 60.8 L50 76.3 L25 60.8 L25 29.9 Z" fill="none" stroke="rgba(255,253,208,0.6)" stroke-width="1.5"/></svg>');
+  background-repeat: repeat;
+  background-size: 60px 70px;
+  background-position: 0 0;
+}

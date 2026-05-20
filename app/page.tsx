@@ -25,8 +25,6 @@ import { supabase } from '@/lib/supabase';
 import AuthModal from '@/components/AuthModal';
 import Link from 'next/link';
 
-
-
 export default function Home() {
   const [text, setText] = useState('');
   const [context, setContext] = useState<WritingContext>('email');
@@ -39,7 +37,7 @@ export default function Home() {
   const [userTier, setUserTier] = useState<'free' | 'pro' | 'team'>('free');
   const [analysesUsed, setAnalysesUsed] = useState(0);
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
-  const [user, setUser] = useState<any>(null); // eslint-disable-line @typescript-eslint/no-explicit-any
+  const [user, setUser] = useState<any>(null);
   const [showAuth, setShowAuth] = useState(false);
 
   const FREE_LIMIT = 3;
@@ -58,45 +56,45 @@ export default function Home() {
 
   // Load user profile on mount (only if user exists)
   useEffect(() => {
-  (async () => {
-    if (!user) {
-      setIsLoadingProfile(false);
-      return;
-    }
-    const today = new Date().toISOString().split('T')[0];
-    const { data, error } = await supabase
-      .from('user_profiles')
-      .select('tier, analyses_today, last_analysis_date')
-      .eq('id', user.id)
-      .single();
+    (async () => {
+      if (!user) {
+        setIsLoadingProfile(false);
+        return;
+      }
+      const today = new Date().toISOString().split('T')[0];
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .select('tier, analyses_today, last_analysis_date')
+        .eq('id', user.id)
+        .single();
 
-    if (error || !data) {
-      await supabase.from('user_profiles').insert({
-        id: user.id,
-        email: user.email,
-        tier: 'free',
-        analyses_today: 0,
-        last_analysis_date: today,
-      });
-      setUserTier('free');
-      setAnalysesUsed(0);
-    } else {
-      setUserTier((data.tier as 'free' | 'pro' | 'team') || 'free');
-      if (data.last_analysis_date === today) {
-        setAnalysesUsed(data.analyses_today || 0);
-      } else {
+      if (error || !data) {
+        await supabase.from('user_profiles').insert({
+          id: user.id,
+          email: user.email,
+          tier: 'free',
+          analyses_today: 0,
+          last_analysis_date: today,
+        });
+        setUserTier('free');
         setAnalysesUsed(0);
-        if ((data.tier || 'free') === 'free') {
-          await supabase
-            .from('user_profiles')
-            .update({ analyses_today: 0, last_analysis_date: today })
-            .eq('id', user.id);
+      } else {
+        setUserTier((data.tier as 'free' | 'pro' | 'team') || 'free');
+        if (data.last_analysis_date === today) {
+          setAnalysesUsed(data.analyses_today || 0);
+        } else {
+          setAnalysesUsed(0);
+          if ((data.tier || 'free') === 'free') {
+            await supabase
+              .from('user_profiles')
+              .update({ analyses_today: 0, last_analysis_date: today })
+              .eq('id', user.id);
+          }
         }
       }
-    }
-    setIsLoadingProfile(false);
-  })();
-}, [user]);
+      setIsLoadingProfile(false);
+    })();
+  }, [user]);
 
   const isFree = userTier === 'free';
   const hasReachedLimit = isFree && analysesUsed >= FREE_LIMIT;
@@ -188,23 +186,17 @@ export default function Home() {
     if (!analysis || isSaved) return;
     setIsSaving(true);
 
-// ----- FREE TIER GATE -----
-  if (userTier === 'free') {
-    toast.error('Upgrade to Pro to save analyses.', {
-      duration: 5000,
-    });
-    setIsSaving(false);
-    return;
-  }
-  // ---- end gate ----
+    if (userTier === 'free') {
+      toast.error('Upgrade to Pro to save analyses.', { duration: 5000 });
+      setIsSaving(false);
+      return;
+    }
 
-     // ----- NEW: Pro gate -----
-  if (userTier !== 'pro' && userTier !== 'team') {
-    toast.error('Save to history is a Pro feature. Upgrade to save.');
-    setIsSaving(false);
-    return;
-  }
-  // --- end gate ---
+    if (userTier !== 'pro' && userTier !== 'team') {
+      toast.error('Save to history is a Pro feature. Upgrade to save.');
+      setIsSaving(false);
+      return;
+    }
 
     if (!user) {
       toast.error('Sign in to save analyses');
@@ -245,237 +237,223 @@ export default function Home() {
     } else {
       setIsSaved(true);
       toast.success('Saved to history!', {
-  style: { background: '#ecfdf5', color: '#059669', border: '1px solid #a7f3d0' },
-});
+        style: { background: '#ecfdf5', color: '#059669', border: '1px solid #a7f3d0' },
+      });
     }
     setIsSaving(false);
   };
 
-  // ========== LANDING PAGE ==========
-  // ========== LANDING PAGE ==========
-if (!user) {
-  return (
-    <main className="min-h-screen">
-      {/* Hero */}
-      <section className="flex flex-col items-center justify-center px-4 py-20">
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center max-w-3xl"
-        >
-          <div className="mb-8 flex justify-center">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/logo.png"
-              alt="Pause"
-              className="h-20 w-auto object-contain mx-auto"
-            />
-          </div>
-          <h1 className="font-playfair text-5xl md:text-7xl font-bold text-stone-800 mb-6">
-            Pause before you send.
-          </h1>
-          <p className="text-lg md:text-xl text-stone-600 mb-10 leading-relaxed">
-            Let AI catch cognitive biases, emotional tone, and hidden assumptions in
-            your writing — so you never hit send on a message you&apos;ll regret.
-          </p>
+  // ========== LANDING PAGE (not signed in) ==========
+  if (!user) {
+    return (
+      <main className="min-h-screen">
+        {/* Hero */}
+        <section className="flex flex-col items-center justify-center px-4 py-20">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-center max-w-3xl"
+          >
+            <div className="mb-8 flex justify-center">
+              <img
+                src="/logo.png"
+                alt="Pause"
+                className="h-20 w-auto object-contain mx-auto"
+              />
+            </div>
+            <h1 className="font-playfair text-5xl md:text-7xl font-bold text-stone-800 mb-6">
+              Before you send that angry Slack message — <br /> see what you'll regret in 5 seconds
+            </h1>
+            <p className="text-lg md:text-xl text-stone-600 mb-10 leading-relaxed">
+              Let AI catch cognitive biases, emotional tone, and hidden assumptions in
+              your writing — so you never hit send on a message you'll regret.
+            </p>
 
+            <button
+              onClick={() => setShowAuth(true)}
+              className="bg-teal-700 text-white px-10 py-4 rounded-2xl font-semibold text-lg hover:bg-teal-800 transition-colors shadow-xl shadow-teal-200/40 inline-flex items-center gap-2"
+            >
+              Get Started Free
+              <ArrowRight className="w-5 h-5" />
+            </button>
+
+            <p className="text-stone-400 text-sm mt-4">
+              No credit card required.
+            </p>
+          </motion.div>
+        </section>
+
+        {/* How it works */}
+        <section className="max-w-5xl mx-auto px-4 py-16">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+          >
+            <h2 className="text-3xl font-playfair font-bold text-center text-stone-800 mb-12">
+              How it works
+            </h2>
+            <div className="grid md:grid-cols-3 gap-8 text-center">
+              <div>
+                <div className="w-14 h-14 bg-teal-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                  <span className="text-2xl">✍️</span>
+                </div>
+                <h3 className="font-semibold text-stone-800 mb-2">1. Write or paste</h3>
+                <p className="text-stone-500 text-sm">
+                  Copy your draft email, Slack message, or tweet into Pause.
+                </p>
+              </div>
+              <div>
+                <div className="w-14 h-14 bg-teal-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                  <span className="text-2xl">🔍</span>
+                </div>
+                <h3 className="font-semibold text-stone-800 mb-2">2. Analyze instantly</h3>
+                <p className="text-stone-500 text-sm">
+                  Our AI scans for biases, tone, and hidden assumptions in seconds.
+                </p>
+              </div>
+              <div>
+                <div className="w-14 h-14 bg-teal-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                  <span className="text-2xl">✨</span>
+                </div>
+                <h3 className="font-semibold text-stone-800 mb-2">3. Send with confidence</h3>
+                <p className="text-stone-500 text-sm">
+                  Apply rephrasing suggestions or reflect before you hit send.
+                </p>
+              </div>
+            </div>
+          </motion.div>
+        </section>
+
+        {/* What makes Pause different */}
+        <section className="max-w-3xl mx-auto px-4 py-12">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.35 }}
+            className="bg-white/90 rounded-3xl p-8 shadow-lg border border-stone-200"
+          >
+            <h2 className="text-2xl font-playfair font-bold text-stone-950 mb-6 text-center">
+              What makes Pause different
+            </h2>
+            <div className="grid md:grid-cols-2 gap-6">
+              <div className="flex gap-3">
+                <span className="text-teal-700 text-lg mt-0.5">🎯</span>
+                <div>
+                  <p className="font-semibold text-stone-800 mb-1">Purpose‑built, not a chatbot</p>
+                  <p className="text-stone-600 text-sm">
+                    No prompts, no instructions. Paste your draft and get structured results instantly. Pause knows exactly what to look for.
+                  </p>
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <span className="text-teal-700 text-lg mt-0.5">📊</span>
+                <div>
+                  <p className="font-semibold text-stone-800 mb-1">Real metrics, not vague advice</p>
+                  <p className="text-stone-600 text-sm">
+                    A regret probability score, emotional tone shift detection, and concrete rephrasing suggestions you can send immediately.
+                  </p>
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <span className="text-teal-700 text-lg mt-0.5">🔒</span>
+                <div>
+                  <p className="font-semibold text-stone-800 mb-1">Private by design</p>
+                  <p className="text-stone-600 text-sm">
+                    Your text is never stored unless you save it. No one reads your messages. No data used for training.
+                  </p>
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <span className="text-teal-700 text-lg mt-0.5">🚀</span>
+                <div>
+                  <p className="font-semibold text-stone-800 mb-1">Free to start, scales with you</p>
+                  <p className="text-stone-600 text-sm">
+                    3 free analyses per day. Pro and Team plans unlock unlimited use, history, exports, and progress tracking.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        </section>
+
+        {/* Commercial video */}
+        <section className="max-w-4xl mx-auto px-4 py-12">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="bg-white/80 rounded-3xl p-6 md:p-10 shadow-xl border border-stone-200 text-center"
+          >
+            <h3 className="text-2xl font-playfair font-bold text-stone-800 mb-4">
+              See Pause in action
+            </h3>
+            <p className="text-stone-600 mb-6 max-w-lg mx-auto">
+              Here's what happens when you paste a heated email into Pause.
+              The regret probability, biases, and suggestions appear instantly.
+            </p>
+            <div className="bg-stone-100 rounded-2xl p-10 text-stone-400 text-sm">
+              <video muted playsInline controls className="w-full h-auto rounded-2xl">
+                <source src="/commercial.mp4" type="video/mp4" />
+                Your browser does not support the video tag.
+              </video>
+            </div>
+          </motion.div>
+        </section>
+
+        {/* Testimonials */}
+        <section className="max-w-4xl mx-auto px-4 py-12">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+          >
+            <h2 className="text-2xl font-playfair font-bold text-center text-stone-950 mb-8">
+              What users are saying
+            </h2>
+            <div className="grid md:grid-cols-2 gap-6">
+              <blockquote className="bg-white/90 rounded-3xl p-6 shadow-lg border border-stone-200">
+                <p className="text-stone-600 italic mb-4">
+                  &ldquo;Pause caught a passive‑aggressive tone I didn't even realise I had.
+                  My draft went from a career‑limiting grenade to a professional email in one click.
+                  It's like having a communication coach on speed dial.&rdquo;
+                </p>
+                <cite className="text-stone-500 not-italic text-sm">
+                  — Maria Q., A very relieved Product Manager
+                </cite>
+              </blockquote>
+
+              <div className="bg-white/90 rounded-3xl p-6 shadow-lg border border-stone-200 flex flex-col items-center justify-center text-center">
+                <p className="text-stone-500 text-sm mb-3">
+                  Have a story about how Pause saved you from a regrettable message?
+                </p>
+                <Link
+                  href="/contact"
+                  className="text-teal-700 hover:text-teal-700 font-medium text-sm"
+                >
+                  Share your story →
+                </Link>
+              </div>
+            </div>
+          </motion.div>
+        </section>
+
+        {/* Final CTA */}
+        <section className="text-center pb-20 px-4">
           <button
             onClick={() => setShowAuth(true)}
-            className="bg-teal-700 text-white px-10 py-4 rounded-2xl font-semibold text-lg hover:bg-teal-800 transition-colors shadow-xl shadow-teal-200/40 inline-flex items-center gap-2"
+            className="bg-teal-700 text-white px-10 py-4 rounded-2xl font-semibold text-lg hover:bg-teal-600 transition-colors shadow-xl shadow-teal-200/40 inline-flex items-center gap-2"
           >
             Get Started Free
             <ArrowRight className="w-5 h-5" />
           </button>
+        </section>
 
-          <p className="text-stone-400 text-sm mt-4">
-            No credit card required. Free plan includes 3 analyses per day.
-          </p>
-        </motion.div>
-      </section>
-
-      {/* How it works */}
-      <section className="max-w-5xl mx-auto px-4 py-16">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-        >
-          <h2 className="text-3xl font-playfair font-bold text-center text-stone-800 mb-12">
-            How it works
-          </h2>
-          <div className="grid md:grid-cols-3 gap-8 text-center">
-            <div>
-              <div className="w-14 h-14 bg-teal-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <span className="text-2xl">✍️</span>
-              </div>
-              <h3 className="font-semibold text-stone-800 mb-2">1. Write or paste</h3>
-              <p className="text-stone-500 text-sm">
-                Copy your draft email, Slack message, or tweet into Pause.
-              </p>
-            </div>
-            <div>
-              <div className="w-14 h-14 bg-teal-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <span className="text-2xl">🔍</span>
-              </div>
-              <h3 className="font-semibold text-stone-800 mb-2">2. Analyze instantly</h3>
-              <p className="text-stone-500 text-sm">
-                Our AI scans for biases, tone, and hidden assumptions in seconds.
-              </p>
-            </div>
-            <div>
-              <div className="w-14 h-14 bg-teal-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <span className="text-2xl">✨</span>
-              </div>
-              <h3 className="font-semibold text-stone-800 mb-2">3. Send with confidence</h3>
-              <p className="text-stone-500 text-sm">
-                Apply rephrasing suggestions or reflect before you hit send.
-              </p>
-            </div>
-          </div>
-        </motion.div>
-      </section>
-
-      {/* What makes Pause different */}
-<section className="max-w-3xl mx-auto px-4 py-12">
-  <motion.div
-    initial={{ opacity: 0, y: 20 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ delay: 0.35 }}
-    className="bg-white/90 rounded-3xl p-8 shadow-lg border border-stone-200"
-  >
-    <h2 className="text-2xl font-playfair font-bold text-stone-950 mb-6 text-center">
-      What makes Pause different
-    </h2>
-    <div className="grid md:grid-cols-2 gap-6">
-      <div className="flex gap-3">
-        <span className="text-teal-700 text-lg mt-0.5">🎯</span>
-        <div>
-          <p className="font-semibold text-stone-800 mb-1">Purpose‑built, not a chatbot</p>
-          <p className="text-stone-600 text-sm">
-            No prompts, no instructions. Paste your draft and get structured results instantly. Pause knows exactly what to look for.
-          </p>
-        </div>
-      </div>
-      <div className="flex gap-3">
-        <span className="text-teal-700 text-lg mt-0.5">📊</span>
-        <div>
-          <p className="font-semibold text-stone-800 mb-1">Real metrics, not vague advice</p>
-          <p className="text-stone-600 text-sm">
-            A regret probability score, emotional tone shift detection, and concrete rephrasing suggestions you can send immediately.
-          </p>
-        </div>
-      </div>
-      <div className="flex gap-3">
-        <span className="text-teal-700 text-lg mt-0.5">🔒</span>
-        <div>
-          <p className="font-semibold text-stone-800 mb-1">Private by design</p>
-          <p className="text-stone-600 text-sm">
-            Your text is never stored unless you save it. No one reads your messages. No data used for training.
-          </p>
-        </div>
-      </div>
-      <div className="flex gap-3">
-        <span className="text-teal-700 text-lg mt-0.5">🚀</span>
-        <div>
-          <p className="font-semibold text-stone-800 mb-1">Free to start, scales with you</p>
-          <p className="text-stone-600 text-sm">
-            3 free analyses per day. Pro and Team plans unlock unlimited use, history, exports, and progress tracking.
-          </p>
-        </div>
-      </div>
-    </div>
-  </motion.div>
-</section>
-
-      
-
-      {/* Demo / GIF placeholder */}
-      <section className="max-w-4xl mx-auto px-4 py-12">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="bg-white/80 rounded-3xl p-6 md:p-10 shadow-xl border border-stone-200 text-center"
-        >
-          <h3 className="text-2xl font-playfair font-bold text-stone-800 mb-4">
-            See Pause in action
-          </h3>
-          <p className="text-stone-600 mb-6 max-w-lg mx-auto">
-            Here&apos;s what happens when you paste a heated email into Pause.
-            The regret probability, biases, and suggestions appear instantly.
-          </p>
-          
-          <div className="bg-stone-100 rounded-2xl p-10 text-stone-400 text-sm">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            {/* Demo video */}
-<video
-  muted
-  playsInline
-  controls
-  className="w-full h-auto rounded-2xl"
->
-  <source src="/commercial.mp4" type="video/mp4" />
-  Your browser does not support the video tag.
-</video>
-          </div>
-        </motion.div>
-      </section>
-
-      {/* Testimonials */}
-<section className="max-w-4xl mx-auto px-4 py-12">
-  <motion.div
-    initial={{ opacity: 0, y: 20 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ delay: 0.4 }}
-  >
-    <h2 className="text-2xl font-playfair font-bold text-center text-stone-950 mb-8">
-      What users are saying
-    </h2>
-    <div className="grid md:grid-cols-2 gap-6">
-      <blockquote className="bg-white/90 rounded-3xl p-6 shadow-lg border border-stone-200">
-        <p className="text-stone-600 italic mb-4">
-          &ldquo;Pause caught a passive‑aggressive tone I didn&rsquo;t even realise I had.
-          My draft went from a career‑limiting grenade to a professional email in one click.
-          It&rsquo;s like having a communication coach on speed dial.&rdquo;
-        </p>
-        <cite className="text-stone-500 not-italic text-sm">
-          — Maria Q., A very relieved Product Manager
-        </cite>
-      </blockquote>
-
-      <div className="bg-white/90 rounded-3xl p-6 shadow-lg border border-stone-200 flex flex-col items-center justify-center text-center">
-        <p className="text-stone-500 text-sm mb-3">
-          Have a story about how Pause saved you from a regrettable message?
-        </p>
-        <Link
-          href="/contact"
-          className="text-teal-700 hover:text-teal-700 font-medium text-sm"
-        >
-          Share your story →
-        </Link>
-      </div>
-    </div>
-  </motion.div>
-</section>
-
-      {/* Final CTA */}
-      <section className="text-center pb-20 px-4">
-        <button
-          onClick={() => setShowAuth(true)}
-          className="bg-teal-700 text-white px-10 py-4 rounded-2xl font-semibold text-lg hover:bg-teal-600 transition-colors shadow-xl shadow-teal-200/40 inline-flex items-center gap-2"
-        >
-          Get Started Free
-          <ArrowRight className="w-5 h-5" />
-        </button>
-      </section>
-
-      {/* Auth modal */}
-      {showAuth && (
-        <AuthModal isOpen={showAuth} onClose={() => setShowAuth(false)} />
-      )}
-    </main>
-  );
-}
+        {/* Auth modal */}
+        {showAuth && <AuthModal isOpen={showAuth} onClose={() => setShowAuth(false)} />}
+      </main>
+    );
+  }
 
   // ========== MAIN APP (signed in) ==========
   return (
@@ -497,9 +475,7 @@ if (!user) {
 
       {/* Context Selector */}
       <div className="flex gap-3 mb-8 justify-center flex-wrap">
-        {(
-          ['email', 'message', 'social', 'journal', 'essay'] as WritingContext[]
-        ).map((ctx) => (
+        {(['email', 'message', 'social', 'journal', 'essay'] as WritingContext[]).map((ctx) => (
           <button
             key={ctx}
             onClick={() => setContext(ctx)}
@@ -533,32 +509,21 @@ if (!user) {
           <div className="flex flex-col items-start gap-1">
             <div
               className={`text-sm font-medium ${
-                isFree && text.length > FREE_CHAR_LIMIT
-                  ? 'text-red-500'
-                  : 'text-stone-500'
+                isFree && text.length > FREE_CHAR_LIMIT ? 'text-red-500' : 'text-stone-500'
               }`}
             >
               {text.length} / {isFree ? FREE_CHAR_LIMIT : '∞'} characters
             </div>
             {isFree && !isLoadingProfile && (
               <div className="text-xs text-stone-400">
-                {FREE_LIMIT - analysesUsed} / {FREE_LIMIT} analyses remaining
-                today
+                {FREE_LIMIT - analysesUsed} / {FREE_LIMIT} analyses remaining today
               </div>
             )}
           </div>
 
           <motion.button
-            whileHover={
-              isAnalyzing || hasReachedLimit || isOverCharLimit
-                ? {}
-                : { scale: 1.02 }
-            }
-            whileTap={
-              isAnalyzing || hasReachedLimit || isOverCharLimit
-                ? {}
-                : { scale: 0.98 }
-            }
+            whileHover={isAnalyzing || hasReachedLimit || isOverCharLimit ? {} : { scale: 1.02 }}
+            whileTap={isAnalyzing || hasReachedLimit || isOverCharLimit ? {} : { scale: 0.98 }}
             onClick={handleAnalyze}
             disabled={isAnalyzing || hasReachedLimit || isOverCharLimit}
             className={`relative px-8 py-3.5 rounded-2xl font-medium flex items-center gap-2 transition-all duration-200 ${
@@ -589,7 +554,7 @@ if (!user) {
 
         {isFree && hasReachedLimit && (
           <p className="mt-3 text-sm text-amber-600">
-            You&apos;ve used all free analyses today.{' '}
+            You've used all free analyses today.{' '}
             <a href="/pricing" className="underline font-medium">
               Upgrade to Pro
             </a>{' '}
@@ -640,95 +605,74 @@ if (!user) {
                   animate={{ width: `${analysis.regretScore}%` }}
                   transition={{ duration: 1, ease: 'easeOut' }}
                   className="h-full rounded-full"
-                  style={{
-                    backgroundColor: getScoreColor(analysis.regretScore),
-                  }}
+                  style={{ backgroundColor: getScoreColor(analysis.regretScore) }}
                 />
               </div>
 
-              <p className="mt-4 text-stone-600">
-                {getScoreMessage(analysis.regretScore)}
-              </p>
+              <p className="mt-4 text-stone-600">{getScoreMessage(analysis.regretScore)}</p>
 
-{/* Share prompt for high regret */}
-{analysis.regretScore >= 60 && (
-  <div className="mt-4 flex items-center gap-3 p-3 bg-amber-50 border border-amber-200 rounded-xl">
-    <p className="text-sm text-amber-800 font-medium">
-      This message scored {analysis.regretScore}% regret probability. Share this result?
-    </p>
-  </div>
-)}
+              {analysis.regretScore >= 60 && (
+                <div className="mt-4 flex items-center gap-3 p-3 bg-amber-50 border border-amber-200 rounded-xl">
+                  <p className="text-sm text-amber-800 font-medium">
+                    This message scored {analysis.regretScore}% regret probability. Share this result?
+                  </p>
+                </div>
+              )}
 
               <div className="flex gap-4 mt-4">
-  <button
-    onClick={() => setShowShare(true)}
-    className="flex items-center gap-2 text-teal-700 hover:text-teal-700 transition-colors font-medium text-sm"
-  >
-    <Share2 className="w-4 h-4" />
-    Share
-  </button>
+                <button
+                  onClick={() => setShowShare(true)}
+                  className="flex items-center gap-2 text-teal-700 hover:text-teal-700 transition-colors font-medium text-sm"
+                >
+                  <Share2 className="w-4 h-4" />
+                  Share
+                </button>
 
-  <button
-    onClick={handleSaveAnalysis}
-    disabled={isSaving || isSaved}
-    className={`flex items-center gap-2 text-sm font-medium transition-colors ${
-      isSaved
-        ? 'text-teal-500 cursor-default'
-        : 'text-teal-700 hover:text-teal-700'
-    }`}
-  >
-    {isSaving ? (
-      <>
-        <RefreshCw className="w-4 h-4 animate-spin" />
-        Saving...
-      </>
-    ) : isSaved ? (
-      <>
-        <Check className="w-4 h-4" />
-        Saved
-      </>
-    ) : (
-      <>
-        <Save className="w-4 h-4" />
-        Save to History
-      </>
-    )}
-  </button>
-</div>
+                <button
+                  onClick={handleSaveAnalysis}
+                  disabled={isSaving || isSaved}
+                  className={`flex items-center gap-2 text-sm font-medium transition-colors ${
+                    isSaved
+                      ? 'text-teal-500 cursor-default'
+                      : 'text-teal-700 hover:text-teal-700'
+                  }`}
+                >
+                  {isSaving ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 animate-spin" />
+                      Saving...
+                    </>
+                  ) : isSaved ? (
+                    <>
+                      <Check className="w-4 h-4" />
+                      Saved
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-4 h-4" />
+                      Save to History
+                    </>
+                  )}
+                </button>
+              </div>
             </motion.div>
 
             {/* Emotional Tone */}
-            <ResultsCard
-              icon={<Heart className="w-5 h-5" />}
-              title="Emotional Tone"
-            >
+            <ResultsCard icon={<Heart className="w-5 h-5" />} title="Emotional Tone">
               <div className="grid grid-cols-3 gap-4">
-                <ToneIndicator
-                  label="Opening"
-                  tone={analysis.emotionalTone.start}
-                />
-                <ToneIndicator
-                  label="Middle"
-                  tone={analysis.emotionalTone.middle}
-                />
-                <ToneIndicator
-                  label="Closing"
-                  tone={analysis.emotionalTone.end}
-                />
+                <ToneIndicator label="Opening" tone={analysis.emotionalTone.start} />
+                <ToneIndicator label="Middle" tone={analysis.emotionalTone.middle} />
+                <ToneIndicator label="Closing" tone={analysis.emotionalTone.end} />
               </div>
               {analysis.emotionalTone.shift !== 'stable' && (
                 <div className="mt-4 p-4 bg-amber-50/80 rounded-2xl text-amber-800">
-                  Tone shift detected:{' '}
-                  {analysis.emotionalTone.shift.replace(/-/g, ' → ')}
+                  Tone shift detected: {analysis.emotionalTone.shift.replace(/-/g, ' → ')}
                 </div>
               )}
             </ResultsCard>
 
             {/* Cognitive Biases */}
-            <ResultsCard
-              icon={<Brain className="w-5 h-5" />}
-              title="Cognitive Biases Detected"
-            >
+            <ResultsCard icon={<Brain className="w-5 h-5" />} title="Cognitive Biases Detected">
               {analysis.biases.length === 0 ? (
                 <p className="text-stone-600">
                   No significant cognitive biases detected. Great job!
@@ -738,9 +682,7 @@ if (!user) {
                   {analysis.biases.map((bias, i) => (
                     <div key={i} className="p-4 bg-stone-100/80 rounded-2xl">
                       <div className="flex items-start justify-between mb-2">
-                        <h4 className="font-semibold text-stone-800">
-                          {bias.type}
-                        </h4>
+                        <h4 className="font-semibold text-stone-800">{bias.type}</h4>
                         <span className="text-sm text-stone-500">
                           {Math.round(bias.confidence * 100)}% confidence
                         </span>
@@ -748,9 +690,7 @@ if (!user) {
                       <p className="text-sm text-stone-600 mb-2 break-words line-clamp-2">
                         &ldquo;{bias.excerpt}&rdquo;
                       </p>
-                      <p className="text-xs text-stone-500">
-                        {bias.explanation}
-                      </p>
+                      <p className="text-xs text-stone-500">{bias.explanation}</p>
                     </div>
                   ))}
                 </div>
@@ -758,25 +698,15 @@ if (!user) {
             </ResultsCard>
 
             {/* Assumptions */}
-            <ResultsCard
-              icon={<Eye className="w-5 h-5" />}
-              title="Assumptions About Others"
-            >
+            <ResultsCard icon={<Eye className="w-5 h-5" />} title="Assumptions About Others">
               {analysis.assumptions.length === 0 ? (
-                <p className="text-stone-600">
-                  No assumptions detected in your writing.
-                </p>
+                <p className="text-stone-600">No assumptions detected in your writing.</p>
               ) : (
                 <div className="space-y-3">
                   {analysis.assumptions.map((assumption, i) => (
-                    <div
-                      key={i}
-                      className="flex items-center gap-3 p-3 bg-purple-50/80 rounded-xl"
-                    >
+                    <div key={i} className="flex items-center gap-3 p-3 bg-purple-50/80 rounded-xl">
                       <div className="w-2 h-2 rounded-full bg-purple-500" />
-                      <p className="text-sm text-purple-900">
-                        &ldquo;{assumption.text}&rdquo;
-                      </p>
+                      <p className="text-sm text-purple-900">&ldquo;{assumption.text}&rdquo;</p>
                     </div>
                   ))}
                 </div>
@@ -785,10 +715,7 @@ if (!user) {
 
             {/* Suggested Rephrases */}
             {analysis.suggestedRephrases.length > 0 && (
-              <ResultsCard
-                icon={<RefreshCw className="w-5 h-5" />}
-                title="Suggested Rephrasing"
-              >
+              <ResultsCard icon={<RefreshCw className="w-5 h-5" />} title="Suggested Rephrasing">
                 <div className="space-y-3">
                   {analysis.suggestedRephrases.map((rephrase, i) => (
                     <button
@@ -796,14 +723,10 @@ if (!user) {
                       onClick={() => handleRephraseApply(rephrase)}
                       className="w-full text-left p-4 bg-teal-50/80 rounded-2xl hover:bg-teal-100/80 transition-colors group"
                     >
-                      <p className="text-teal-800 font-medium mb-1">
-                        Rewrite {i + 1}:
-                      </p>
-                      <p className="text-stone-700">
-                        &ldquo;{rephrase}&rdquo;
-                      </p>
+                      <p className="text-teal-800 font-medium mb-1">Rewrite {i + 1}:</p>
+                      <p className="text-stone-700">&ldquo;{rephrase}&rdquo;</p>
                       <p className="text-xs text-teal-700 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        Click to apply &rarr;
+                        Click to apply →
                       </p>
                     </button>
                   ))}
@@ -843,7 +766,7 @@ if (!user) {
         >
           <FeatureCard
             icon={<Shield className="w-6 h-6" />}
-            title="Private &amp; Secure"
+            title="Private & Secure"
             description="Your text is processed locally where possible and never stored."
           />
           <FeatureCard
@@ -874,17 +797,8 @@ if (!user) {
   );
 }
 
-// ---------- Helper Components ----------
-
-function ResultsCard({
-  icon,
-  title,
-  children,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  children: React.ReactNode;
-}) {
+// ---------- Helper Components (unchanged) ----------
+function ResultsCard({ icon, title, children }: { icon: React.ReactNode; title: string; children: React.ReactNode }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -893,9 +807,7 @@ function ResultsCard({
     >
       <div className="flex items-center gap-3 mb-6">
         <div className="text-teal-700">{icon}</div>
-        <h3 className="text-xl font-playfair font-bold text-stone-800">
-          {title}
-        </h3>
+        <h3 className="text-xl font-playfair font-bold text-stone-800">{title}</h3>
       </div>
       {children}
     </motion.div>
@@ -919,23 +831,13 @@ function ToneIndicator({ label, tone }: { label: string; tone: string }) {
 
   return (
     <div className="text-center p-4 bg-stone-100/80 rounded-2xl">
-      <p className="text-xs text-stone-500 mb-2 uppercase tracking-wide">
-        {label}
-      </p>
+      <p className="text-xs text-stone-500 mb-2 uppercase tracking-wide">{label}</p>
       <p className="font-semibold text-stone-700">{capitalizeTone(tone)}</p>
     </div>
   );
 }
 
-function FeatureCard({
-  icon,
-  title,
-  description,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  description: string;
-}) {
+function FeatureCard({ icon, title, description }: { icon: React.ReactNode; title: string; description: string }) {
   return (
     <div className="p-8 bg-white/80 rounded-3xl border border-stone-300/50 hover:shadow-lg hover:shadow-stone-300/30 transition-shadow">
       <div className="text-teal-700 mb-4">{icon}</div>
@@ -946,11 +848,9 @@ function FeatureCard({
 }
 
 // ---------- Utility Functions ----------
-
 function getPlaceholder(context: WritingContext): string {
   const placeholders: Record<WritingContext, string> = {
-    email:
-      "Dear team, I wanted to address the concerns raised in yesterday's meeting...",
+    email: "Dear team, I wanted to address the concerns raised in yesterday's meeting...",
     message: "Hey, I've been thinking about what you said earlier...",
     social: "Can't believe how some people just don't get it...",
     journal: 'Today I felt overwhelmed because...',
@@ -966,9 +866,7 @@ function getScoreColor(score: number): string {
 }
 
 function getScoreMessage(score: number): string {
-  if (score < 30)
-    return 'This message looks well-balanced and thoughtful. You are in a good headspace.';
-  if (score < 60)
-    return 'There are some elements that might be worth reconsidering before sending.';
+  if (score < 30) return 'This message looks well-balanced and thoughtful. You are in a good headspace.';
+  if (score < 60) return 'There are some elements that might be worth reconsidering before sending.';
   return 'This message carries significant emotional weight. Consider waiting 24 hours before sending.';
 }
