@@ -17,6 +17,13 @@ export const metadata: Metadata = {
 
 const posts = [
   {
+    slug: 'how-to-check-tone-of-message',
+    title: 'How to Check the Tone of a Message Before Hitting Send',
+    excerpt:
+      'Learn to analyze message tone before sending. Avoid passive‑aggressive emails, catch hidden biases, and communicate with confidence. A practical 2026 guide.',
+    date: '2026-05-29',
+  },
+  {
     slug: 'how-to-give-feedback-without-sounding-harsh',
     title: 'How to Give Feedback Without Sounding Harsh',
     excerpt:
